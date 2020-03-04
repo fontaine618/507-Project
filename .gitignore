@@ -8,3 +8,5 @@
 *.gz
 *.bak
 *.tks
+*.pdf
+code/data/tag-genome/tag_relevance.dat
