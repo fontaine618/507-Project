@@ -1,0 +1,136 @@
+\usepackage{float}
+\usepackage[]{graphicx}
+\graphicspath{ {fig/} }
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorinlistoftodos,prependcaption]{todonotes}
+
+
+\newcommand{\dat}[1]{\todo[color=green!40]{#1}}
+\newcommand{\simon}[1]{\todo[color=blue!40]{#1}}
+
+\startlocaldefs
+\numberwithin{equation}{section}
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}{Lemma}[section]
+\newtheorem{cor}{Corollary}[section]
+\newtheorem{prop}{Proposition}[section]
+\theoremstyle{remark}
+\newtheorem{rem}{Remark}[section]
+
+% -----------------------------------------------------------------------------
+% algorithms
+\usepackage[]{algorithmicx}
+\usepackage[]{algorithm}
+\usepackage{algpseudocode}
+\algnewcommand\algorithmicparameters{\textbf{Parameters:}}
+\algnewcommand\PARAMETERS{\item[\algorithmicparameters]}
+\renewcommand\algorithmicprocedure{\textbf{Procedure:}}
+\algnewcommand\PROCEDURE{\item[\algorithmicprocedure]}
+\algnewcommand\algorithmicendprocedure{\textbf{End Procedure}}
+\algnewcommand\ENDPROCEDURE{\item[\algorithmicendprocedure]}
+\algnewcommand\algorithmicinput{\textbf{Input:}}
+\algnewcommand\INITIALIZE{\item[\algorithmicinitialize]}
+\algnewcommand\algorithmicinitialize{\textbf{Initialize:}}
+\algnewcommand\INPUT{\item[\algorithmicinput]}
+\algnewcommand\algorithmicoutput{\textbf{Output:}}
+\algnewcommand\OUTPUT{\item[\algorithmicoutput]}
+\renewcommand{\algorithmicwhile}{\textbf{While}}
+\renewcommand{\algorithmicend}{\textbf{End}}
+\renewcommand{\algorithmicif}{\textbf{If}}
+\renewcommand{\algorithmicelse}{\textbf{Else}}
+\renewcommand{\algorithmicrepeat}{\textbf{Repeat:}}
+\renewcommand{\algorithmicuntil}{\textbf{Until}}
+\renewcommand{\algorithmicfor}{\textbf{For}}
+\renewcommand{\algorithmicdo}{\textbf{do:}}
+
+
+% -----------------------------------------------------------------------------
+% math macros
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bbm}
+\usepackage{amsmath}
+% general
+\DeclareMathOperator{\eps}{\varepsilon}
+% dx with spacing
+\makeatletter \renewcommand\d[1]{\ensuremath{%
+  \,\mathrm{d}#1\@ifnextchar\d{\!}{}}}
+\makeatother
+% norms
+\newcommand{\vertiii}[1]{{\left\vert\kern-0.25ex\left\vert\kern-0.25ex\left\vert #1 
+    \right\vert\kern-0.25ex\right\vert\kern-0.25ex\right\vert}}
+\newcommand{\vertii}[1]{{\left\vert\kern-0.25ex\left\vert #1 
+    \right\vert\kern-0.25ex\right\vert}}
+\newcommand{\verti}[1]{{\left\vert #1 
+    \right\vert}}
+% inner product
+\newcommand{\inprod}[1]{{\left\langle #1 
+    \right\rangle}}
+% text operators
+\DeclareMathOperator{\ind}{\mathbbm 1}
+\DeclareMathOperator{\ddd}{,\ldots ,}
+\DeclareMathOperator{\TV}{TV}
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\im}{Im}
+\DeclareMathOperator{\iid}{i.i.d.}
+\DeclareMathOperator{\MH}{MH}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\MTM}{MTM}
+\DeclareMathOperator{\prox}{\bf prox}
+%caligraphic fonts
+\DeclareMathOperator{\cA}{\mathcal A}
+\DeclareMathOperator{\cB}{\mathcal B}
+\DeclareMathOperator{\cC}{\mathcal C}
+\DeclareMathOperator{\cD}{\mathcal D}
+\DeclareMathOperator{\cF}{\mathcal F}
+\DeclareMathOperator{\cG}{\mathcal G}
+\DeclareMathOperator{\cH}{\mathcal H}
+\DeclareMathOperator{\cI}{\mathcal I}
+\DeclareMathOperator{\cK}{\mathcal K}
+\DeclareMathOperator{\cL}{\mathcal L}
+\DeclareMathOperator{\cN}{\mathcal N}
+\DeclareMathOperator{\cO}{\mathcal O}
+\DeclareMathOperator{\cP}{\mathcal P}
+\DeclareMathOperator{\cQ}{\mathcal Q}
+\DeclareMathOperator{\cS}{\mathcal S}
+\DeclareMathOperator{\cT}{\mathcal T}
+\DeclareMathOperator{\cW}{\mathcal W}
+\DeclareMathOperator{\cX}{\mathcal X}
+\DeclareMathOperator{\cY}{\mathcal Y}
+%bold symbols
+\DeclareMathOperator{\b0}{\mathbf 0}
+\DeclareMathOperator{\b1}{\mathbf 1}
+\DeclareMathOperator{\bX}{\mathbf X}
+\DeclareMathOperator{\bx}{\mathbf x}
+\DeclareMathOperator{\bB}{\mathbf B}
+\DeclareMathOperator{\bD}{\mathbf D}
+\DeclareMathOperator{\bR}{\mathbf R}
+\DeclareMathOperator{\bbeta}{\boldsymbol \beta}
+%tilde and bold symbols
+\DeclareMathOperator{\tD}{\tilde{\bD} }
+%convergences
+\DeclareMathOperator{\convP}{\overset{\bP}{\rightarrow}}
+\DeclareMathOperator{\convps}{\overset{p.s.}{\rightarrow}}
+\DeclareMathOperator{\convL}{\overset{\mathcal L}{\rightarrow}}
+\DeclareMathOperator{\convL2}{\overset{\mathcal L_2}{\rightarrow}}
+\DeclareMathOperator{\convD}{\overset{\mathcal D}{\rightarrow}}
+%long convergence
+\DeclareMathOperator{\lconvP}{\;\overset{\bP}{\longrightarrow}\;}
+\DeclareMathOperator{\lconvps}{\;\overset{p.s.}{\longrightarrow}\;}
+\DeclareMathOperator{\lconvL}{\;\overset{\mathcal L}{\longrightarrow}\;}
+\DeclareMathOperator{\lconvL2}{\;\overset{\mathcal L_2}{\longrightarrow}\;}
+\DeclareMathOperator{\lconvD}{\;\overset{\mathcal D}{\longrightarrow}\;}
+%operators with indeces underneath
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+%blackbord fonts
+\DeclareMathOperator{\bbE}{\mathbb E}
+\DeclareMathOperator{\bbN}{\mathbb N}
+\DeclareMathOperator{\bbR}{\mathbb R}
+\DeclareMathOperator{\bbP}{\mathbb P}
+\DeclareMathOperator{\bbZ}{\mathbb Z}
+% -----------------------------------------------------------------------------

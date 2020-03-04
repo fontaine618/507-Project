@@ -1,0 +1,100 @@
+\documentclass[bj, preprint]{imsart}
+\RequirePackage[OT1]{fontenc}
+\RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{amsthm,amsmath,natbib,booktabs,cleveref}
+
+% put your definitions there:
+\endlocaldefs
+\input{../utils/preamble}
+
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{{\Large STATS 507 Project Proposal:} \\ 
+\bf The title\simon{Change title and running title}}
+\runtitle{Running title}
+
+
+
+\begin{aug}
+\author{
+\fnms{Trong Dat} 
+\snm{Do}
+\thanksref{a,e1}
+\ead[label=e1,mark]{dodat@umich.edu}
+}
+\and
+\author{
+\fnms{Simon} 
+\snm{Fontaine}
+\thanksref{a,e2}
+\ead[label=e2,mark]{simfont@umich.edu}
+}
+\address[a]{University of Michigan, Department of Statistics. West Hall, 1085 South University, Ann Arbor, MI, U.S.A., 48109. \printead{e1,e2}}
+\runauthor{Trong Dat Do and Simon Fontaine}
+\affiliation{University of Michigan, Department of Statistics}
+\end{aug}
+
+
+
+%\begin{abstract}
+
+%\end{abstract}
+
+
+%\begin{keyword}
+%\kwd{Keyword 1}.
+%
+%\href{https://mathscinet.ams.org/mathscinet/msc/msc2010.html}{MSC 2010 subject classifications}: TBD
+%\end{keyword}
+
+% history:
+% \received{\smonth{12} \syear{2019}}
+
+\tableofcontents
+\listoftodos
+\end{frontmatter}
+
+
+
+%------------------------------------------------------------------------------
+\section{The \texttt{MovieLens} dataset}\label{sec:setting}\simon{Check spelling of the section}
+
+The \texttt{MovieLens} datasets \citep{harper2015MovieLensDatasetsHistory} contains user ratings of a variety of movies continuously collected starting from 1998. 
+In addition to the \texttt{user}-\texttt{movie}-\texttt{rating} pairings, the datasets contains information about movie genres, word tagging of movies provided by users and user demographic information. 
+
+We will consider the \texttt{MovieLens 100K Dataset}\footnote{Available at \url{https://grouplens.org/datasets/movielens/100k/}}, which is one of the multiple datasets provided by \texttt{GroupLens}\footnote{Organization website: \url{https://grouplens.org/}}. 
+We will be interested in this particular dataset because of it contains additional demographic information about the users in the dataset. 
+To include tagging information, we also consider the \texttt{MovieLens Tag Genome Dataset}\footnote{Available at \url{https://grouplens.org/datasets/movielens/tag-genome/}}. 
+Here is a summary of the contents of the datasets that will be used\footnote{From the \texttt{README.txt} file attached to the datasets (\url{http://files.grouplens.org/datasets/movielens/ml-100k-README.txt}, \url{http://files.grouplens.org/datasets/tag-genome/README.html)}}:
+
+\begin{description}
+	\item[\texttt{MovieLens 100K Dataset}] The dataset was collected from the \texttt{MovieLens} website (\url{movielens.umn.edu}) between September 19th, 1997 through April 22nd, 1998. It has been pre-processed and cleaned to include only examples where the users have made at least 20 ratings during the collection period and where demographic information are complete. In the \texttt{u.data} file, there are $100,000$ ratings on the scale of 1 to 5, taking only integer values. It contains the following entries: \texttt{user id}, \texttt{item id}, \texttt{rating}, \texttt{timestamp}. In the \texttt{u.item} file, there are $1,682$ movies with the following information: \texttt{movie id}, \texttt{movie title}, \texttt{release date}, \texttt{IMDb URL} and 19 columns indicating movie genre with 0-1 encoding where 1 denotes that the movie is of the corresponding genre. In the \texttt{u.user} file, there are $943$ users with the following information: \texttt{user id}, \texttt{age}, \texttt{gender}, \texttt{occupation} (see \texttt{u.occupation} file for details) and \texttt{zip code}.
+	\item[\texttt{MovieLens Tag Genome Dataset}] This dataset contains tagging information of $9,734$ movies and $1,128$ tags. In particular, the \texttt{tag\_relevance} file contains the relevance of all tags for all movies reported on a continuous scale from 0 to 1, where 1 indicates strong relevance.
+\end{description}
+
+
+%------------------------------------------------------------------------------
+\section{Research questions}\label{sec:setting}
+
+
+%------------------------------------------------------------------------------
+\section{Methodology}\label{sec:setting}
+We will 
+
+%------------------------------------------------------------------------------
+\section{Preliminary repot}\label{sec:report}
+We will 
+
+
+%------------------------------------------------------------------------------
+\bibliographystyle{imsart-nameyear}
+\bibliography{../utils/references}{}
+
+
+
+
+
+\end{document}
