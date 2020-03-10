@@ -41,14 +41,14 @@
 
 %\end{abstract}
 
-\tableofcontents
-\listoftodos
+% \tableofcontents
+% \listoftodos
 \end{frontmatter}
 
 
 
 %------------------------------------------------------------------------------
-\section{The \texttt{MovieLens} dataset}\label{sec:setting}\simon{Check spelling of the section}
+\section{The \texttt{MovieLens} dataset}\label{sec:setting}
 
 The \texttt{MovieLens} datasets \citep{harper2015MovieLensDatasetsHistory} contains user ratings of a variety of movies continuously collected starting from 1998. 
 In addition to the \texttt{user}-\texttt{movie}-\texttt{rating} pairings, the datasets contains information about movie genres, word tagging of movies provided by users and user demographic information. 
@@ -73,7 +73,7 @@ Here is a summary of the contents of the datasets that will be used\footnote{Fro
 
 
 %------------------------------------------------------------------------------
-\section{Research questions}\label{sec:setting}\simon{Check spelling of the section}
+\section{Research questions}\label{sec:setting}
 
 \subsection{Prediction modeling}
 
@@ -81,24 +81,24 @@ Our first research question is to construct a predictive model for the user rati
 
 \subsection{Analysis}
 
-A secondary research question we are interested in is to analyze the effect of the available information on the user ratings. For example, we could look for genres and tags that are related to movies with better ratings. Then, we can perform more granular analyses using the demographic data: this could allow to extract correlations between population groups an movie interests. The insights recovered from such analyses could be relevant for decision-making such as identifying which movies to produce and which population groups to target with advertisement.
+A secondary research question we are interested in is to analyze the effect of the available information on the user ratings. For example, we could look for genres and tags that are related to movies with better ratings. Then, we can perform more granular analyses using the demographic data: this could allow to extract correlations between population groups and movie interests. The insights recovered from such analyses could be relevant for decision-making such as identifying which movies to produce and which population groups to target with advertisement.
 
 %------------------------------------------------------------------------------
 \section{Methodology}\label{sec:setting}
-We will investigate the first question by four different approaches. The best one will be selected to make inference and answer the second question. The four methods that we consider are k-Nearest Neighbors (kNN), Neural Network, Matrix Completion and Restricted Boltzmann Machine. 
+We will investigate the first question using four different approaches and the best predictive model will be selected to make inference and answer our secondary research question. The four methods that we consider are k-Nearest Neighbors (k-NN), Neural Network, Matrix Completion and Restricted Boltzmann Machine. 
 
-Our first approach is using kNN algorithm. The idea is when two movies are similarly rated by the users in the training set, then they are near each other (in sense of some distance), and if a new user likes one movie, the another movie will be recommended. We will implement k-NN algorithm with different distances such as Euclidian distance and cosine dissimilarity. This is the most simple model that we consider, and it is pointed out in \cite{toscher2009bigchaos} that kNN can be outperformed by simple factor models.
+Our first approach is using a k-NN algorithm. The idea is to define some distance measure between users as well as between movies, which allows to predict ratings using user-movie pairs that are similar to it. We will implement k-NN algorithm with different distances such as Euclidian distance and cosine dissimilarity. This is the most simple model that we consider, and it is pointed out in \cite{toscher2009bigchaos} that kNN can be outperformed by simple factor models.
 
-Secondly, we will use Neural Network to predict the movie ratings. The input layer is information about each user and movie genres (tags) and the output is the rating of the user for the movie. The architecture of the network (number of players, number of nodes and learning rate) will be adjusted to find a good model. Similar idea could be found in \cite{tang2015user}, where they build the model with the input layers containing information about user-word instead of user-genre. 
+Secondly, we will use Neural Networks to predict the movie ratings. The input layer is information about each user and movie genres and tags and the output is the rating of the user for the movie. The architecture of the network (number of players, number of nodes and learning rate) will be adjusted to find a good model. Similar idea could be found in \cite{tang2015user}, where they build the model with the input layers containing information about user-word instead of user-genre. 
 
-The third approach, Matrix Completion, became famous from the Netflix movie-rating challenge \cite{bennett2007netflix}. This competition was held by Netflix, a movie-rental company, in effort to improve the recommendation system for their customers. The winner of this competition used many statistical techniques, where the Singular Value Decomposition (SVD) was the most important. The idea here is that our users-movies matrix is a missing-valued matrix, by assuming it is low-rank, we can use SVD iteratively until our matrix converges to a completed matrix, which gives us the prediction of rating of any user for any movie. Despite of being efficient, this method is often overfit the data, so we will also consider a penalized modification of it.
+The third approach, Matrix Completion, became famous from the Netflix movie-rating challenge \cite{bennett2007netflix}. This competition was held by Netflix, a movie-rental company, in effort to improve the recommendation system for their customers. The winner of this competition used many statistical techniques, where the Singular Value Decomposition (SVD) was the most important. The idea here is that our user-movie matrix is a missing-valued matrix and, by assuming it is low-rank, we can use SVD iteratively until our matrix converges to a completed matrix, which gives us the predicted rating of any movie by any user. Despite of being efficient, this method often overfit the data, so we will also consider a penalized version.
 
 Finally, we will implement Restricted Boltzmann Machine (RBM) \cite{10.1145/1273496.1273596}. RBM is a probabilistic model, where we assume that there are hidden layers of variables affecting the visible users' ratings, and come up with the update rule to learn the distribution of these hidden variables. It is claimed by \cite{10.1145/1273496.1273596} that RBM can outperform SVD models. 
 
 
 %------------------------------------------------------------------------------
 \section{Preliminary and Final report}\label{sec:report}
-In Preliminary report, we will try to address the first question: Apply each approach to the MovieLens data set and compare them. We will present the advantages and disadvantages of each approach and interpret the result. In the Final report, it is expected to have a comprehensible answer for both questions. One more potential question we will address if time allows is to combine the approaches above to derive the best recommend algorithm. 
+In our Preliminary report, we wish to address the first question: that is, applying each approach to the \texttt{MovieLens} dataset and compare them. We will present the advantages and disadvantages of each approach and interpret the result. In the Final report, it is expected to have a comprehensible answer for both questions. One more potential question we will address if time allows is to combine the approaches above to derive the best recommendetion algorithm. 
 
 %------------------------------------------------------------------------------
 \bibliographystyle{imsart-nameyear}
