@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def load_ratings():
@@ -176,4 +177,22 @@ def load_ratings_with_tags_movies_and_user_info():
 	])
 	ratings_with_movies_and_users = pd.merge(ratings_with_movies, users, how="left", on="user_id")
 	ratings_with_movies_and_users.dropna(axis='index', inplace=True)
+	ratings_with_movies_and_users.index.name = "rating_id"
 	return ratings_with_movies_and_users
+
+
+def load_train_test_and_feature_list(test_pct=0.25, n_folds=5, seed=1):
+	ratings = load_ratings_with_tags_movies_and_user_info()
+	np.random.seed(seed)
+	n = len(ratings)
+	n_test = int(n * test_pct)
+	test_id = np.random.choice(ratings.index, n_test, replace=False)
+	ratings["test"] = [i in test_id for i in ratings.index]
+	ratings["fold_id"] = np.random.randint(1, n_folds + 1, n)
+	ratings = ratings.groupby("test")
+	train = ratings.get_group(0)
+	test = ratings.get_group(1)
+	features = train.columns.tolist()
+	for colname in ["user_id", "movie_id", "rating", "timestamp", "test", "fold_id"]:
+		features.remove(colname)
+	return train, test, features

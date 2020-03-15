@@ -1,3 +1,3 @@
-from data import *
+import data
 
-ratings = load_ratings_with_tags_movies_and_user_info()
+train, test, features = data.load_train_test_and_feature_list()
