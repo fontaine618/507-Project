@@ -182,6 +182,13 @@ def load_ratings_with_tags_movies_and_user_info():
 
 
 def load_train_test_and_feature_list(test_pct=0.25, n_folds=5, seed=1):
+	"""Returns the train set, the test set and the name of the features
+
+	Notes
+	-----
+	Columns are the same as in load_ratings_with_tags_movies_and_user_info with
+	- fold_id in the train set
+	"""
 	ratings = load_ratings_with_tags_movies_and_user_info()
 	np.random.seed(seed)
 	n = len(ratings)
@@ -190,9 +197,9 @@ def load_train_test_and_feature_list(test_pct=0.25, n_folds=5, seed=1):
 	ratings["test"] = [i in test_id for i in ratings.index]
 	ratings["fold_id"] = np.random.randint(1, n_folds + 1, n)
 	ratings = ratings.groupby("test")
-	train = ratings.get_group(0)
-	test = ratings.get_group(1)
+	train = ratings.get_group(0).drop(columns="test")
+	test = ratings.get_group(1).drop(columns=["test", "fold_id"])
 	features = train.columns.tolist()
-	for colname in ["user_id", "movie_id", "rating", "timestamp", "test", "fold_id"]:
+	for colname in ["user_id", "movie_id", "rating", "timestamp", "fold_id"]:
 		features.remove(colname)
 	return train, test, features
