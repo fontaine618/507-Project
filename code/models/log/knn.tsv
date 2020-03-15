@@ -1,2 +1,1 @@
-test_accuracy	train_accuracy	details
-0.8924558367595916	1.0908123785849757	5NN standardized
+time	description	train_accuracy	train_precision	train_recall	train_mae	train_mse	test_accuracy	test_precision	test_recall	test_mae	test_mse
