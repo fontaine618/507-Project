@@ -45,3 +45,6 @@ class Model:
 
 	def log(self, path):
 		pass
+
+	def cv(self):
+		pass
