@@ -99,27 +99,31 @@ class KNN(Model):
 				"\n" + "\t".join(entries)
 			)
 
-	# TODO move to Model
 	def cv(self):
-		cv_metrics = pd.DataFrame(columns=[
+		metrics = pd.DataFrame(columns=[
 			"cv_accuracy",
 			"cv_precision",
 			"cv_recall",
 			"cv_mae",
 			"cv_mse"
 		])
-		for i in range(1, 6):
-			fit = KNN(**self.options)
-			fit.add_train_data(self.df[self.df["fold_id"] != i], self.response, self.features)
-			# fit.train()
-			fit.test(self.df[self.df["fold_id"] == i])
-			cv_metrics = cv_metrics.append({
-				"cv_accuracy": fit.metrics['test_accuracy'],
-				"cv_precision": fit.metrics['test_precision'],
-				"cv_recall": fit.metrics['test_recall'],
-				"cv_mae": fit.metrics['test_mae'],
-				"cv_mse": fit.metrics['test_mse']
-			}, ignore_index=True)
-			print(i, fit.metrics)
+		#with Pool(5) as pool:
+		#	cv_metrics = pool.map(self._do_one_fold, range(1, 6))
+		cv_metrics = [self._do_one_fold(i) for i in range(1, 6)]
+		for i, res in enumerate(cv_metrics):
+			metrics.loc[i] = list(res.values())
+		self.metrics.update(metrics.mean().transpose().to_dict())
 
-		self.metrics.update(cv_metrics.mean().transpose().to_dict())
+	def _do_one_fold(self, i):
+		fit = KNN(**self.options)
+		fit.add_train_data(self.df[self.df["fold_id"] != i], self.response, self.features)
+		# fit.train()
+		fit.test(self.df[self.df["fold_id"] == i])
+		cv_metrics = {
+			"cv_accuracy": fit.metrics['test_accuracy'],
+			"cv_precision": fit.metrics['test_precision'],
+			"cv_recall": fit.metrics['test_recall'],
+			"cv_mae": fit.metrics['test_mae'],
+			"cv_mse": fit.metrics['test_mse']
+		}
+		return cv_metrics
