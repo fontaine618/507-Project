@@ -50,10 +50,10 @@ with Pool(6) as pool:
 # 	print(key, val)
 #
 #
-# import pandas as pd
-# pd.set_option('display.max_rows', 100)
-# pd.set_option('display.max_columns', 20)
-# pd.set_option('display.width', 1000)
-#
-# metrics = pd.read_table("models/log/knn.tsv", index_col="description")
-# metrics[[id for id in metrics.columns if id.startswith("cv_")]]
+import pandas as pd
+pd.set_option('display.max_rows', 100)
+pd.set_option('display.max_columns', 20)
+pd.set_option('display.width', 1000)
+
+metrics = pd.read_table("models/log/knn.tsv", index_col="description")
+metrics[[id for id in metrics.columns if id.startswith("cv_")]]
