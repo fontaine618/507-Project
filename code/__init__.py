@@ -57,3 +57,14 @@ pd.set_option('display.width', 1000)
 
 metrics = pd.read_table("models/log/knn.tsv", index_col="description")
 metrics[[id for id in metrics.columns if id.startswith("cv_")]]
+
+
+
+#Train svd
+# for embed_dim in [10, 20, 50]:
+# 	for iter_nums in [20, 30, 50]:
+# 		svd = models.SVD(embed_dim=embed_dim, iter_nums=iter_nums)
+# 		svd.add_train_data(train, "rating", features)
+# 		svd.train()
+# 		svd.test(test)
+# 		svd.log()
