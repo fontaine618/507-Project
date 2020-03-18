@@ -6,6 +6,16 @@ import itertools
 train, test, features = data.load_train_test_and_feature_list()
 
 
+
+# Train NN
+
+nn = models.NN(type="Classifier")
+nn.add_train_data(train, "rating", features)
+nn.train()
+nn.cv()
+nn.test(test)
+nn.log()
+
 # cross validation
 types = ["Classifier", "Regressor"]
 ks = [3, 5, 10, 20, 50, 100]
@@ -22,7 +32,7 @@ def do_cv(type, k, user_prop, tag_prop):
 	knn.test(test)
 	knn.log()
 
-
+# using multiprocessing
 with Pool(6) as pool:
 	cv_metrics = pool.starmap(do_cv, setups)
 
@@ -55,8 +65,8 @@ pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 1000)
 
-metrics = pd.read_table("models/log/knn.tsv", index_col="description")
-metrics[[id for id in metrics.columns if id.startswith("cv_")]]
+metrics = pd.read_table("models/log/nn.tsv", index_col="description")
+print(metrics[[id for id in metrics.columns if id.startswith("cv_")]])
 
 
 

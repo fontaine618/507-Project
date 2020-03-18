@@ -29,7 +29,7 @@ class Model:
 		self.scaler = None
 		self.X_train = None
 		self.y_train = None
-		self._prepare_model(**kwargs)
+		self._prepare_model()
 
 	def _prepare_model(self):
 		pass
