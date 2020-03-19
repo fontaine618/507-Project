@@ -7,7 +7,6 @@ import torch
 import time
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
-import numpy as np
 
 class RatingsDataset(Dataset):
     """Custom Dataset for loading Ratings"""
@@ -38,7 +37,7 @@ class MLP(torch.nn.Module):
         self.n_classes = n_classes
         self.n_layers = len(layers)
         self.n_input = [num_features] + [n for n, _ in layers]
-        self.n_output = [n for n, _ in layers] + [1 if type == "Regressor" else self.n_classes]
+        self.n_output = [n for n, _ in layers] + [1 if self.type.startswith("Regressor") else self.n_classes]
         self.functions = [f for _, f in layers] + ["output"]
         self.layers = torch.nn.ModuleList()
         for n_in, n_out in zip(self.n_input, self.n_output):
@@ -53,8 +52,10 @@ class MLP(torch.nn.Module):
             elif f == "sigmoid":
                 out = torch.sigmoid(out)
             elif f == "output":
-                if self.type in "Classifier":
+                if self.type == "Classifier":
                     out = F.softmax(out, 1)
+                elif self.type == "RegressorSigmoid":
+                    out = torch.sigmoid(out) * 10. - 2.
                 else:
                     # Regressor and Ordinal
                     pass
@@ -111,7 +112,7 @@ class NN(Model):
                 targets = targets.to(self.options["device"]).float()
                 preds = self.model(features.float())
                 num_examples += targets.size(0)
-                if self.options["type"] == "Regressor":
+                if self.options["type"] in ["Regressor", "RegressorSigmoid"]:
                     curr_loss += F.mse_loss(preds, targets, reduction='sum')
                 elif self.options["type"] == "Classifier":
                     targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
@@ -132,7 +133,7 @@ class NN(Model):
 
     def _compute_metrics(self, data_loader):
         DEVICE = self.options["device"]
-        if self.options["type"] == "Regressor":
+        if self.options["type"] in ["Regressor", "RegressorSigmoid"]:
             preds = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             ys = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             with torch.no_grad():
@@ -143,6 +144,7 @@ class NN(Model):
                     preds = torch.cat([preds, self.model(features)], dim=0)
             preds = preds.cpu().numpy()
             ys = ys.cpu().numpy()
+            preds_class = preds.round().clip(1, 5).astype(int)
         elif self.options["type"] == "Classifier":
             preds = torch.tensor([[]], device=DEVICE).view((0, self.model.n_classes)).float()
             ys = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
@@ -168,10 +170,11 @@ class NN(Model):
             preds_class = preds_class.sum(axis=1).clip(1, 5).reshape((-1, 1))
             preds = preds_class
             ys = ys.cpu().numpy()
-        preds_class = preds.round().clip(1, 5).astype(int)
+        else:
+            raise NotImplementedError("type {} not available".format(self.options["type"]))
         acc = accuracy_score(ys, preds_class)
-        prec = precision_score(ys, preds_class, average="weighted", zero_division=0)
-        rec = recall_score(ys, preds_class, average="weighted", zero_division=0)
+        prec = precision_score(ys, preds_class, average="weighted")
+        rec = recall_score(ys, preds_class, average="weighted")
         mae = mean_absolute_error(ys, preds)
         mse = mean_squared_error(ys, preds)
         return acc, prec, rec, mae, mse
@@ -190,7 +193,7 @@ class NN(Model):
 
                 # FORWARD AND BACK PROP
                 preds = self.model(features.float())
-                if self.model.type == "Regressor":
+                if self.model.type in ["Regressor", "RegressorSigmoid"]:
                     cost = F.mse_loss(preds, targets.float())
                 elif self.model.type == "Classifier":
                     targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
@@ -203,6 +206,8 @@ class NN(Model):
                             1,  torch.max(targets.long() - 1 - k, torch.zeros_like(targets)), 1
                         )
                     cost = F.binary_cross_entropy_with_logits(preds, targets_01)
+                else:
+                    raise NotImplementedError("type {} not available".format(self.options["type"]))
                 self.optimizer.zero_grad()
                 cost.backward()
                 minibatch_cost.append(cost)

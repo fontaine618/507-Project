@@ -5,36 +5,60 @@ import itertools
 
 train, test, features = data.load_train_test_and_feature_list()
 
-
-
 # Train NN
+for type in ["Regressor", "RegressorSigmoid", "Classifier", "Ordinal"]:
+	for layers in [
+		[(10000, "relu"), (1000, "relu"), (100, "relu"), (1, "sigmoid")],
+		[(10000, "relu"), (1000, "relu"), (100, "relu")],
+	]:
+		nn = models.NN(type=type, layers=layers)
+		nn.add_train_data(train, "rating", features)
+		nn.train()
+		nn.cv()
+		nn.test(test)
+		nn.log()
 
-nn = models.NN(type="Classifier")
-nn.add_train_data(train, "rating", features)
-nn.train()
-nn.cv()
-nn.test(test)
-nn.log()
+# nn = models.NN(type="Regressor", layers=[(10000, "relu"), (1000, "relu")])
+# nn.add_train_data(train, "rating", features)
+# nn.train()
+#
+# self = nn
+# data_loader = self.train_loader
+#
+# from scipy import stats
+# stats.kendalltau(ys, preds)
+# from sklearn.metrics import confusion_matrix
+# confusion_matrix(ys, preds_class)
+# from sksurv.metrics import concordance_index_censored
+# concordance_index_censored(True, ys, preds)
+# import matplotlib.pyplot as plt
+# plt.hist(preds)
+# plt.show()
+# plt.hist(preds - ys)
+# plt.show()
 
-# cross validation
-types = ["Classifier", "Regressor"]
-ks = [3, 5, 10, 20, 50, 100]
-user_props = [0.0, 1.0, 10., 100.]
-tag_props = [0.0, 0.001, 0.01, 0.1, 1.0]
-setups = list(itertools.product(types, ks, user_props, tag_props))
 
 
-def do_cv(type, k, user_prop, tag_prop):
-	knn = models.KNN(n_neighbors=k, type=type, user_prop=user_prop, tag_prop=tag_prop)
-	knn.add_train_data(train, "rating", features)
-	knn.train()
-	knn.cv()
-	knn.test(test)
-	knn.log()
 
-# using multiprocessing
-with Pool(6) as pool:
-	cv_metrics = pool.starmap(do_cv, setups)
+# # cross validation
+# types = ["Classifier", "Regressor"]
+# ks = [3, 5, 10, 20, 50, 100]
+# user_props = [0.0, 1.0, 10., 100.]
+# tag_props = [0.0, 0.001, 0.01, 0.1, 1.0]
+# setups = list(itertools.product(types, ks, user_props, tag_props))
+#
+#
+# def do_cv(type, k, user_prop, tag_prop):
+# 	knn = models.KNN(n_neighbors=k, type=type, user_prop=user_prop, tag_prop=tag_prop)
+# 	knn.add_train_data(train, "rating", features)
+# 	knn.train()
+# 	knn.cv()
+# 	knn.test(test)
+# 	knn.log()
+#
+# # using multiprocessing
+# with Pool(6) as pool:
+# 	cv_metrics = pool.starmap(do_cv, setups)
 
 
 # # Train knn
@@ -78,3 +102,4 @@ print(metrics[[id for id in metrics.columns if id.startswith("cv_")]])
 # 		svd.train()
 # 		svd.test(test)
 # 		svd.log()
+
