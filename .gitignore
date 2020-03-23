@@ -10,3 +10,5 @@
 *.tks
 *.pdf
 code/data/tag-genome/tag_relevance.dat
+*.pyc
+code/__pycache__/
