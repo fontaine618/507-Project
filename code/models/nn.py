@@ -51,11 +51,15 @@ class MLP(torch.nn.Module):
                 out = torch.relu(out)
             elif f == "sigmoid":
                 out = torch.sigmoid(out)
+            elif f == "relu6":
+                out = F.relu6(out)
             elif f == "output":
                 if self.type == "Classifier":
                     out = F.softmax(out, 1)
                 elif self.type == "RegressorSigmoid":
                     out = torch.sigmoid(out) * 10. - 2.
+                elif self.type == "RegressorRelu6":
+                    out = F.relu6(out)
                 else:
                     # Regressor and Ordinal
                     pass
@@ -82,6 +86,12 @@ class NN(Model):
             self.options["n_classes"] = 5
         if "layers" not in self.options:
             self.options["layers"] = [(1000, "relu"), (100, "relu")]
+        print("="*60)
+        print("Options")
+        print("-"*60)
+        for key, val in self.options.items():
+            print(key, ":", val)
+        print("="*60)
 
     def add_train_data(self, df, response, features):
         self.df = df
@@ -112,7 +122,7 @@ class NN(Model):
                 targets = targets.to(self.options["device"]).float()
                 preds = self.model(features.float())
                 num_examples += targets.size(0)
-                if self.options["type"] in ["Regressor", "RegressorSigmoid"]:
+                if self.options["type"] in ["Regressor", "RegressorSigmoid", "RegressorRelu6"]:
                     curr_loss += F.mse_loss(preds, targets, reduction='sum')
                 elif self.options["type"] == "Classifier":
                     targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
@@ -133,7 +143,7 @@ class NN(Model):
 
     def _compute_metrics(self, data_loader):
         DEVICE = self.options["device"]
-        if self.options["type"] in ["Regressor", "RegressorSigmoid"]:
+        if self.options["type"] in ["Regressor", "RegressorSigmoid", "RegressorRelu6"]:
             preds = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             ys = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             with torch.no_grad():
@@ -177,10 +187,12 @@ class NN(Model):
         rec = recall_score(ys, preds_class, average="weighted")
         mae = mean_absolute_error(ys, preds)
         mse = mean_squared_error(ys, preds)
+        print(acc, prec, rec, mae, mse)
         return acc, prec, rec, mae, mse
 
     def train(self):
         # Train model
+        print("Training")
         DEVICE = self.options["device"]
         start_time = time.time()
         minibatch_cost = []
@@ -193,7 +205,7 @@ class NN(Model):
 
                 # FORWARD AND BACK PROP
                 preds = self.model(features.float())
-                if self.model.type in ["Regressor", "RegressorSigmoid"]:
+                if self.model.type in ["Regressor", "RegressorSigmoid", "RegressorRelu6"]:
                     cost = F.mse_loss(preds, targets.float())
                 elif self.model.type == "Classifier":
                     targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
@@ -216,17 +228,17 @@ class NN(Model):
                 self.optimizer.step()
 
                 # LOGGING
-                if not batch_idx % 50:
-                    print('Epoch: %03d/%03d | Batch %03d/%03d | Cost: %.4f'
-                          % (epoch + 1, self.options["num_epochs"], batch_idx,
-                             len(self.train_loader), cost))
+                # if not batch_idx % 50:
+                    # print('Epoch: %03d/%03d | Batch %03d/%03d | Cost: %.4f'
+                    #       % (epoch + 1, self.options["num_epochs"], batch_idx,
+                    #          len(self.train_loader), cost))
 
             self.model.eval()
             cost = self._compute_epoch_loss(self.train_loader)
             epoch_cost.append(cost)
 
-            print('Epoch: %03d/%03d Train Cost: %.4f' % (epoch + 1, self.options["num_epochs"], cost))
-            print('Time elapsed: %.2f min' % ((time.time() - start_time) / 60))
+            # print('Epoch: %03d/%03d Train Cost: %.4f' % (epoch + 1, self.options["num_epochs"], cost))
+            # print('Time elapsed: %.2f min' % ((time.time() - start_time) / 60))
         print('Total Training Time: %.2f min' % ((time.time() - start_time) / 60))
         # Evaluate
         acc, prec, rec, mae, mse = self._compute_metrics(self.train_loader)
@@ -239,6 +251,7 @@ class NN(Model):
         })
 
     def test(self, test_df):
+        print("Testing")
         test_dataset = RatingsDataset(test_df, self.response, self.features)
         test_loader = DataLoader(
             dataset=test_dataset,
@@ -280,6 +293,8 @@ class NN(Model):
         self.metrics.update(metrics.mean().transpose().to_dict())
 
     def _do_one_fold(self, i):
+        print("="*60)
+        print("CV" + str(i))
         fit = NN(**self.options)
         fit.add_train_data(self.df[self.df["fold_id"] != i], self.response, self.features)
         fit.train()

@@ -6,10 +6,12 @@ import itertools
 train, test, features = data.load_train_test_and_feature_list()
 
 # Train NN
-for type in ["Regressor", "RegressorSigmoid", "Classifier", "Ordinal"]:
+for type in ["Regressor", "RegressorSigmoid", "RegressorRelu6", "Classifier", "Ordinal"]:
+# for type in ["RegressorRelu6"]:
 	for layers in [
-		[(10000, "relu"), (1000, "relu"), (100, "relu"), (1, "sigmoid")],
-		[(10000, "relu"), (1000, "relu"), (100, "relu")],
+		[(10000, "relu"), (1000, "relu")],
+		[(10000, "relu"), (100, "relu")],
+		[(1000, "relu"), (100, "relu")],
 	]:
 		nn = models.NN(type=type, layers=layers)
 		nn.add_train_data(train, "rating", features)
@@ -92,7 +94,7 @@ pd.set_option('display.width', 1000)
 metrics = pd.read_table("models/log/nn.tsv", index_col="description")
 print(metrics[[id for id in metrics.columns if id.startswith("cv_")]])
 
-
+metrics["cv_accuracy"].sort_values()
 
 #Train svd
 # for embed_dim in [10, 20, 50]:
