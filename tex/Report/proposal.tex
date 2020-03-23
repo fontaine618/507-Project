@@ -1,0 +1,185 @@
+\documentclass[bj, preprint]{imsart}
+\RequirePackage[OT1]{fontenc}
+\RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{amsthm,amsmath,natbib,booktabs,cleveref}
+
+% put your definitions there:
+\endlocaldefs
+\input{../utils/preamble}
+
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{{\Large STATS 507 Project Report:} \\ 
+\bf \texttt{MovieLens} Datasets---Predicting and Analyzing User Ratings of Movies}
+\runtitle{\texttt{MovieLens}---Predicting and Analyzing Movie Ratings}
+
+\begin{aug}
+\author{
+\fnms{Trong Dat} 
+\snm{Do}
+\thanksref{a,e1}
+\ead[label=e1,mark]{dodat@umich.edu}
+}
+\and
+\author{
+\fnms{Simon} 
+\snm{Fontaine}
+\thanksref{a,e2}
+\ead[label=e2,mark]{simfont@umich.edu}
+}
+\address[a]{University of Michigan, Department of Statistics. West Hall, 1085 South University, Ann Arbor, MI, U.S.A., 48109. \printead{e1,e2}}
+\runauthor{Trong Dat Do and Simon Fontaine}
+\affiliation{University of Michigan, Department of Statistics}
+\end{aug}
+
+
+
+%\begin{abstract}
+
+%\end{abstract}
+
+\tableofcontents
+\listoftodos
+\end{frontmatter}
+
+
+
+%------------------------------------------------------------------------------
+\section{The \texttt{MovieLens} Datasets}\label{sec:dataset}
+
+The \texttt{MovieLens} datasets \citep{harper2015MovieLensDatasetsHistory} contains user ratings of a variety of movies continuously collected starting from 1998. 
+In addition to the \texttt{user}-\texttt{movie}-\texttt{rating} pairings, the datasets contains information about movie genres, word tagging of movies provided by users and user demographic information. 
+
+We will consider the \texttt{MovieLens 100K Dataset}\footnote{Available at \url{https://grouplens.org/datasets/movielens/100k/}}, which is one of the multiple datasets provided by \texttt{GroupLens}\footnote{Organization website: \url{https://grouplens.org/}}. 
+We will be interested in this particular dataset because it contains additional demographic information about the users in the dataset. 
+To include tagging information, we also consider the \texttt{MovieLens Tag Genome Dataset}\footnote{Available at \url{https://grouplens.org/datasets/movielens/tag-genome/}}. 
+Here is a summary of the contents of the datasets that will be used\footnote{From the \texttt{README.txt} file attached to the datasets (\url{http://files.grouplens.org/datasets/movielens/ml-100k-README.txt}, \url{http://files.grouplens.org/datasets/tag-genome/README.html)}}:
+
+\begin{description}
+	\item[\texttt{MovieLens 100K Dataset}] 
+	The dataset was collected from the \texttt{MovieLens} website (\url{movielens.umn.edu}) between September 19th, 1997 through April 22nd, 1998. 
+	It has been pre-processed and cleaned to include only examples where the users have made at least 20 ratings during the collection period and where demographic information are complete. 
+	In the \texttt{u.data} file, there are \num{100000} ratings on the scale of 1 to 5, taking only integer values. 
+	It contains the following entries: \texttt{user id}, \texttt{item id}, \texttt{rating}, \texttt{timestamp}. 
+	In the \texttt{u.item} file, there are \num{1682} movies with the following information: \texttt{movie id}, \texttt{movie title}, \texttt{release date}, \texttt{IMDb URL} and 19 columns indicating movie genre with 0-1 encoding where 1 denotes that the movie is of the corresponding genre. 
+	In the \texttt{u.user} file, there are \num{943} users with the following information: \texttt{user id}, \texttt{age}, \texttt{gender}, \texttt{occupation} (see \texttt{u.occupation} file for details) and \texttt{zip code}.
+	\item[\texttt{MovieLens Tag Genome Dataset}] 
+	This dataset contains tagging information of \num{9734} movies and \num{1128} tags. 
+	In particular, the \texttt{tag\_relevance} file contains the relevance of all tags for all movies reported on a continuous scale from 0 to 1, where 1 indicates strong relevance.
+\end{description}
+
+
+%------------------------------------------------------------------------------
+\section{Research Questions}\label{sec:questions}
+
+\subsection{Prediction Modeling}
+
+Our first research question is to construct a predictive model for the user ratings using the available information. In particular, we wish to produce a model that is able to accurately predict the movie rating (for some movie already in the dataset) by a given user (also in the dataset). This model could then be part of a \textit{recommendation system} where the predicted rating could be used as input to produce the recommendations.
+
+\subsection{Exploratory Analysis}
+
+A secondary research question we are interested in is to analyze the effect of the available information on the user ratings. For example, we could look for genres and tags that are related to movies with better ratings. Then, we can perform more granular analyses using the demographic data: this could allow to extract correlations between population groups and movie interests. The insights recovered from such analyses could be relevant for decision-making such as identifying which movies to produce and which population groups to target with advertisement.
+
+%------------------------------------------------------------------------------
+\section{Methodology}\label{sec:method}
+
+%------------------------------------------------------------------------------
+\subsection{Data Pre-processing}\label{subsec:method.preprocess}
+
+The \texttt{MovieLens 100K Dataset} and the \texttt{MovieLens Tag Genome Dataset} have both been extensively cleaned by \texttt{GroupLens}\footnote{See the two \texttt{README} files for details: \url{http://files.grouplens.org/datasets/movielens/ml-100k-README.txt} and \url{http://files.grouplens.org/datasets/tag-genome/README.html}}. 
+Thus, the main pre-processing we have to perform is the merging of the different datasets and the creation of the training and testing sets.
+
+%------------------------------------------------------------------------------
+\subsubsection{Merging the Datasets}\label{subsubsec:method.preprocess.merge}\simon{find the correct numbers for this section} 
+
+First, the three datasets in \texttt{MovieLens 100K Dataset}, corresponding to user data, movie data and the ratings, have unique IDs which allows us to easily match them. 
+There were no ratings which we were unable to match to users and/or movies in these datasets.
+
+Second, the \texttt{MovieLens Tag Genome Dataset} also has unique IDs identifying movies, but they differ from those in the \texttt{MovieLens 100K Dataset}. 
+Hence, we resort to matching the movie on the movie name. 
+Direct matching of the strings allowed of to match a large proportion (~80\%) of the movies. 
+There were also some movie that we were able to match using simple rules. 
+For example, the movie names include the year of publication which were often mismatched by a year and prevented direct matching. 
+Also, other movie names included the original name (in a foreign language) in either of the two datasets which prevented direct matching, but could still be detected. 
+Finally, visual inspection (mostly by hand) of the remaining unmatched movies allowed to identify a few additional matches.
+In total, we were able to match \num{1000} out of the \num{1681} in the \texttt{MovieLens 100K Dataset}. 
+We therefore dropped all ratings of the movies which we could not matched. Fortunately, only very obscure movies did not make the cut and only \num{1000} ratings out of \num{100000} had to be dropped: the final dataset therefore was composed of \num{99000} ratings on \num{1000} movies and \num{1000} users. 
+
+%------------------------------------------------------------------------------
+\subsubsection{Data Splitting}\label{subsubsec:method.preprocess.split}\simon{find the correct numbers for this section}
+
+In order to assess the performance of the various models we consider, we proceed to the usual training-testing splitting. The training set consists of 75\% of the dataset (\num{74000} ratings) and the testing set of 25\% of the data (\num{24000} ratings). For consistency of results, the splitting was kept constant throughout the analysis, although it was constructed using a simple random sample of the original dataset.
+
+Furthermore, the training set was split into cross-validation sets. In particular, the \num{74000} ratings were each assigned to one of 5 folds randomly, yielding training sets of size \num{60000} and validations sets of size \num{14000}. Again, this splitting was kept constant throughout the analysis.
+
+%------------------------------------------------------------------------------
+\subsection{Modeling}\label{subsec:method.models}
+
+Describe models, what are the tuning parameters, etc.
+
+%------------------------------------------------------------------------------
+\subsubsection{K-Nearest-Neighbors}\label{subsubsec:method.models.knn}
+
+%------------------------------------------------------------------------------
+\subsubsection{Neural Networks}\label{subsubsec:method.models.nn}
+
+%------------------------------------------------------------------------------
+\subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
+
+%------------------------------------------------------------------------------
+\subsubsection{Restricted Bolztmann Machine}\label{subsubsec:method.models.rbm}
+
+
+
+
+
+
+
+%------------------------------------------------------------------------------
+\subsection{Implementation}\label{subsec:method.impl}
+
+Briefly mention how the implementation is done (e.g. which package we use and important details)
+
+%------------------------------------------------------------------------------
+\subsubsection{K-Nearest-Neighbors}\label{subsubsec:method.impl.knn}
+
+%------------------------------------------------------------------------------
+\subsubsection{Neural Networks}\label{subsubsec:method.impl.nn}
+
+%------------------------------------------------------------------------------
+\subsubsection{Matrix completion}\label{subsubsec:method.impl.svd}
+
+%------------------------------------------------------------------------------
+\subsubsection{Restricted Bolztmann Machine}\label{subsubsec:method.impl.rbm}
+
+
+
+
+
+%We will investigate the first question using four different approaches and the best predictive model will be selected to make inference and answer our secondary research question. The four methods that we consider are k-Nearest Neighbors (k-NN), Neural Network, Matrix Completion and Restricted Boltzmann Machine. 
+
+%Our first approach is using a k-NN algorithm. The idea is to define some distance measure between users as well as between movies, which allows to predict ratings using user-movie pairs that are similar to it. We will implement k-NN algorithm with different distances such as Euclidian distance and cosine dissimilarity. This is the most simple model that we consider, and it is pointed out in \cite{toscher2009bigchaos} that kNN can be outperformed by simple factor models.
+
+%Secondly, we will use Neural Networks to predict the movie ratings. The input layer is information about each user and movie genres and tags and the output is the rating of the user for the movie. The architecture of the network (number of players, number of nodes and learning rate) will be adjusted to find a good model. Similar idea could be found in \cite{tang2015user}, where they build the model with the input layers containing information about user-word instead of user-genre. 
+
+%The third approach, Matrix Completion, became famous from the Netflix movie-rating challenge \cite{bennett2007netflix}. This competition was held by Netflix, a movie-rental company, in effort to improve the recommendation system for their customers. The winner of this competition used many statistical techniques, where the Singular Value Decomposition (SVD) was the most important. The idea here is that our user-movie matrix is a missing-valued matrix and, by assuming it is low-rank, we can use SVD iteratively until our matrix converges to a completed matrix, which gives us the predicted rating of any movie by any user. Despite of being efficient, this method often overfit the data, so we will also consider a penalized version.
+
+%Finally, we will implement Restricted Boltzmann Machine (RBM) \cite{10.1145/1273496.1273596}. RBM is a probabilistic model, where we assume that there are hidden layers of variables affecting the visible users' ratings, and come up with the update rule to learn the distribution of these hidden variables. It is claimed by \cite{10.1145/1273496.1273596} that RBM can outperform SVD models. 
+
+
+%------------------------------------------------------------------------------
+\section{Preliminary and Final report}\label{sec:report}
+In our Preliminary report, we wish to address the first question: that is, applying each approach to the \texttt{MovieLens} dataset and compare them. We will present the advantages and disadvantages of each approach and interpret the result. In the Final report, it is expected to have a comprehensible answer for both questions. One more potential question we will address if time allows is to combine the approaches above to derive the best recommendetion algorithm. 
+
+%------------------------------------------------------------------------------
+\bibliographystyle{imsart-nameyear}
+\bibliography{../utils/references}{}
+
+
+
+
+
+\end{document}
