@@ -35,8 +35,9 @@ class MLPEmbed(torch.nn.Module):
             n_embed_users=50,
             n_embed_movies=100,
             n_classes=5,
-            n_users=943,
-            n_movies=1681
+            n_users=943 + 1,
+            n_movies=1681 + 1,
+            use_features=True
     ):
         super(MLPEmbed, self).__init__()
         # embeddings
@@ -51,7 +52,11 @@ class MLPEmbed(torch.nn.Module):
         self.type = type
         self.n_classes = n_classes
         self.n_layers = len(layers)
-        self.n_input = [self.num_features + self.n_embed_users + self.n_embed_movies] + [n for n, _ in layers]
+        self.use_features = use_features
+        if self.use_features:
+            self.n_input = [self.num_features + self.n_embed_users + self.n_embed_movies] + [n for n, _ in layers]
+        else:
+            self.n_input = [self.n_embed_users + self.n_embed_movies] + [n for n, _ in layers]
         self.n_output = [n for n, _ in layers] + [1 if self.type.startswith("Regressor") else self.n_classes]
         self.functions = [f for _, f in layers] + ["output"]
         self.layers = torch.nn.ModuleList()
@@ -63,18 +68,25 @@ class MLPEmbed(torch.nn.Module):
         u = self.user_embedding(user_ids)
         m = self.movie_embedding(movie_ids)
         # MLP
-        out = torch.cat([u, m, x], dim=1)
+        if self.use_features:
+            out = torch.cat([u, m, x], dim=1)
+        else:
+            out = torch.cat([u, m], dim=1)
         for layer, f in zip(self.layers, self.functions):
             out = layer(out)
             if f == "relu":
                 out = torch.relu(out)
             elif f == "sigmoid":
                 out = torch.sigmoid(out)
+            elif f == "relu6":
+                out = F.relu6(out)
             elif f == "output":
                 if self.type == "Classifier":
                     out = F.softmax(out, 1)
                 elif self.type == "RegressorSigmoid":
                     out = torch.sigmoid(out) * 10. - 2.
+                elif self.type == "RegressorRelu6":
+                    out = F.relu6(out)
                 else:
                     # Regressor and Ordinal
                     pass
@@ -99,14 +111,16 @@ class NNEmbed(Model):
             self.options["type"] = "Regressor"
         if "n_classes" not in self.options:
             self.options["n_classes"] = 5
+        if "use_features" not in self.options:
+            self.options["use_features"] = True
         if "n_embed_users" not in self.options:
             self.options["n_embed_users"] = 50
         if "n_embed_movies" not in self.options:
             self.options["n_embed_movies"] = 100
         if "n_users" not in self.options:
-            self.options["n_users"] = 943
+            self.options["n_users"] = 943 + 1
         if "n_movies" not in self.options:
-            self.options["n_movies"] = 1681
+            self.options["n_movies"] = 1681 + 1
         if "layers" not in self.options:
             self.options["layers"] = [(1000, "relu"), (100, "relu")]
 
@@ -127,35 +141,37 @@ class NNEmbed(Model):
             self.train_dataset.x.shape[1],
             self.options["layers"],
             self.options["type"],
-            self.options["n_embed_users"],
-            self.options["n_embed_movies"]
+            n_embed_users=self.options["n_embed_users"],
+            n_embed_movies=self.options["n_embed_movies"],
+            use_features=self.options["use_features"]
         )
         self.model = model.to(self.options["device"])
         self.optimizer = torch.optim.SGD(model.parameters(), lr=self.options["lr"])
 
     def _compute_epoch_loss(self, data_loader):
+        DEVICE = self.options["device"]
         curr_loss, num_examples = 0., 0
         with torch.no_grad():
             for features, targets, users, movies in data_loader:
-                features = features.to(self.options["device"]).float()
-                targets = targets.to(self.options["device"]).float()
-                users = users.to(self.options["device"]).float()
-                movies = movies.to(self.options["device"]).float()
-                preds = self.model(features.float(), users.float(), movies.float())
+                features = features.to(DEVICE).float()
+                targets = targets.to(DEVICE).float()
+                users = users.to(DEVICE).long()
+                movies = movies.to(DEVICE).long()
+                preds = self.model(features, users, movies)
                 num_examples += targets.size(0)
-                if self.options["type"] in ["Regressor", "RegressorSigmoid"]:
+                if self.options["type"].startswith("Regressor"):
                     curr_loss += F.mse_loss(preds, targets, reduction='sum')
                 elif self.options["type"] == "Classifier":
-                    targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
+                    targets_01 = torch.cuda.LongTensor(targets.size(0), self.model.n_classes).zero_()
                     targets_01 = targets_01.scatter_(1, targets.long()-1, 1)
-                    curr_loss += F.binary_cross_entropy(preds, targets_01, reduction='sum')
+                    curr_loss += F.binary_cross_entropy(preds.float(), targets_01.float(), reduction='sum')
                 elif self.options["type"] == "Ordinal":
-                    targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
+                    targets_01 = torch.cuda.LongTensor(targets.size(0), self.model.n_classes).zero_()
                     for k in range(self.model.n_classes):
                         targets_01 = targets_01.scatter_(
                             1, torch.max(targets.long()-1-k, torch.zeros_like(targets.long())), 1
                         )
-                    curr_loss += F.binary_cross_entropy_with_logits(preds, targets_01, reduction='sum')
+                    curr_loss += F.binary_cross_entropy_with_logits(preds.float(), targets_01.float(), reduction='sum')
                 else:
                     raise NotImplementedError("type {} not available".format(self.options["type"]))
 
@@ -164,7 +180,7 @@ class NNEmbed(Model):
 
     def _compute_metrics(self, data_loader):
         DEVICE = self.options["device"]
-        if self.options["type"] in ["Regressor", "RegressorSigmoid"]:
+        if self.options["type"].startswith("Regressor"):
             preds = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             ys = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             with torch.no_grad():
@@ -232,24 +248,25 @@ class NNEmbed(Model):
 
                 # FORWARD AND BACK PROP
                 preds = self.model(features, users, movies)
-                if self.model.type in ["Regressor", "RegressorSigmoid"]:
+                if self.model.type.startswith("Regressor"):
                     cost = F.mse_loss(preds, targets)
                 elif self.model.type == "Classifier":
-                    targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
+                    targets_01 = torch.cuda.LongTensor(targets.size(0), self.model.n_classes).zero_()
                     targets_01 = targets_01.scatter_(1, targets.long() - 1, 1)
-                    cost = F.binary_cross_entropy(preds, targets_01)
+                    cost = F.binary_cross_entropy(preds.float(), targets_01.float())
                 elif self.model.type == "Ordinal":
-                    targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
+                    targets_01 = torch.cuda.LongTensor(targets.size(0), self.model.n_classes).zero_()
                     for k in range(self.model.n_classes):
                         targets_01 = targets_01.scatter_(
-                            1,  torch.max(targets.long() - 1 - k, torch.zeros_like(targets)), 1
+                            1,  torch.max(targets.long() - 1 - k, torch.zeros_like(targets).long()), 1
                         )
-                    cost = F.binary_cross_entropy_with_logits(preds, targets_01)
+                    cost = F.binary_cross_entropy_with_logits(preds.float(), targets_01.float())
                 else:
                     raise NotImplementedError("type {} not available".format(self.options["type"]))
                 self.optimizer.zero_grad()
                 cost.backward()
                 minibatch_cost.append(cost)
+
 
                 # UPDATE MODEL PARAMETERS
                 self.optimizer.step()

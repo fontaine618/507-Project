@@ -122,7 +122,7 @@ class NN(Model):
                 targets = targets.to(self.options["device"]).float()
                 preds = self.model(features.float())
                 num_examples += targets.size(0)
-                if self.options["type"] in ["Regressor", "RegressorSigmoid", "RegressorRelu6"]:
+                if self.options["type"].startswith("Regressor"):
                     curr_loss += F.mse_loss(preds, targets, reduction='sum')
                 elif self.options["type"] == "Classifier":
                     targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()
@@ -143,7 +143,7 @@ class NN(Model):
 
     def _compute_metrics(self, data_loader):
         DEVICE = self.options["device"]
-        if self.options["type"] in ["Regressor", "RegressorSigmoid", "RegressorRelu6"]:
+        if self.options["type"].startswith("Regressor"):
             preds = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             ys = torch.tensor([[]], device=DEVICE).view((0, 1)).float()
             with torch.no_grad():
@@ -205,7 +205,7 @@ class NN(Model):
 
                 # FORWARD AND BACK PROP
                 preds = self.model(features.float())
-                if self.model.type in ["Regressor", "RegressorSigmoid", "RegressorRelu6"]:
+                if self.model.type.startswith("Regressor"):
                     cost = F.mse_loss(preds, targets.float())
                 elif self.model.type == "Classifier":
                     targets_01 = torch.cuda.FloatTensor(targets.size(0), self.model.n_classes).zero_()

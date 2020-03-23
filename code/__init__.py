@@ -93,7 +93,7 @@ metrics = pd.read_table("models/log/knn.tsv", index_col="description")
 print(metrics[[id for id in metrics.columns if id.startswith("cv_")]])
 
 
-metrics["cv_mae"].sort_values()
+metrics["cv_accuracy"].sort_values()
 
 
 
