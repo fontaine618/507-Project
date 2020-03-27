@@ -4,5 +4,5 @@ import pandas as pd
 
 train, test, features = data.load_train_test_and_feature_list()
 
-len(train["movie_id"].unique())
-len(test["movie_id"].unique())
+print(set(train["movie_id"].unique()) == set(test["movie_id"].unique()))
+print(set(train["user_id"].unique()) == set(test["user_id"].unique()))
