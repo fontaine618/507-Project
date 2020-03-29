@@ -2,20 +2,21 @@ import data
 import models
 from multiprocessing import Pool
 import itertools
+import pandas as pd
 
-train, test, features = data.load_train_test_and_feature_list()
+#train, test, features = data.load_train_test_and_feature_list()
 
 # Train NN
-for type in ["Regressor"]:
-	for layers in [
-		[(100, "relu"), (100, "relu")],
-	]:
-		nn = models.NNEmbed(type=type, layers=layers)
-		nn.add_train_data(train, "rating", features)
-		nn.train()
-		nn.cv()
-		nn.test(test)
-		nn.log()
+# for type in ["Regressor"]:
+# 	for layers in [
+# 		[(100, "relu"), (100, "relu")],
+# 	]:
+# 		nn = models.NNEmbed(type=type, layers=layers)
+# 		nn.add_train_data(train, "rating", features)
+# 		nn.train()
+# 		nn.cv()
+# 		nn.test(test)
+# 		nn.log()
 
 # nn = models.NN(type="Regressor", layers=[(10000, "relu"), (1000, "relu")])
 # nn.add_train_data(train, "rating", features)
@@ -83,20 +84,20 @@ for type in ["Regressor"]:
 # 	print(key, val)
 #
 
-#Train svd#
-import pandas as pd
-pd.set_option('display.max_rows', 100)
-pd.set_option('display.max_columns', 20)
-pd.set_option('display.width', 1000)
 
-metrics = pd.read_table("models/log/knn.tsv", index_col="description")
-print(metrics[[id for id in metrics.columns if id.startswith("cv_")]])
+# import pandas as pd
+# pd.set_option('display.max_rows', 100)
+# pd.set_option('display.max_columns', 20)
+# pd.set_option('display.width', 1000)
+#
+# metrics = pd.read_table("models/log/knn.tsv", index_col="description")
+# print(metrics[[id for id in metrics.columns if id.startswith("cv_")]])
+#
+#
+# metrics["cv_accuracy"].sort_values()
 
 
-metrics["cv_accuracy"].sort_values()
-
-
-
+#Train svd
 # for embed_dim in [10, 20, 50]:
 # 	for iter_nums in [20, 30, 50]:
 # 		svd = models.SVD(embed_dim=embed_dim, iter_nums=iter_nums)
@@ -104,3 +105,23 @@ metrics["cv_accuracy"].sort_values()
 # 		svd.train()
 # 		svd.test(test)
 # 		svd.log()
+
+##play with RBM
+
+# train, test = data.load_train_test_ratings()
+
+# for num_hidden_nodes in [10, 20, 30, 50]:
+#     for Gibbs_iters in [5, 10, 25]:
+#         for max_iters in [1, 5, 10, 20]:
+#             for learning_rate in [0.01, 0.1, 1, 10]:
+#                 train, test = data.load_train_test_ratings()
+#                 rbm = models.RBM(num_hidden_nodes=num_hidden_nodes, max_iters=max_iters, learning_rate=learning_rate, Gibbs_iters=Gibbs_iters)
+#                 rbm.add_train_data(train, "rating", ["user_id", "movie_id"])
+#                 rbm.train()
+#                 rbm.test(test)
+#                 rbm.log()
+
+
+
+
+

@@ -216,3 +216,31 @@ def load_train_test_and_feature_list(test_pct=0.25, n_folds=5, seed=1):
 	for colname in ["user_id", "movie_id", "rating", "timestamp", "fold_id"]:
 		features.remove(colname)
 	return train, test, features
+
+def load_train_test_ratings(test_pct=0.25, n_folds=5, seed=1):
+	"""Returns the train set, the test set with column of user_id, movie_id, and ratings only
+	"""
+	ratings = load_ratings()
+	np.random.seed(seed)
+	# # SRS
+	# n = len(ratings)
+	# n_test = int(n * test_pct)
+	# test_id = np.random.choice(ratings.index, n_test, replace=False)
+	# ratings["test"] = [i in test_id for i in ratings.index]
+	# ratings["fold_id"] = np.random.randint(1, n_folds + 1, n)
+	# Stratified RS
+	ratings_movie_gr = ratings.groupby("movie_id")
+	groups = dict()
+	for movie_id, df in ratings_movie_gr:
+		n_gr = len(df)
+		if n_gr < 20:
+			continue
+		df["test"] = np.random.rand(n_gr) < test_pct
+		df["fold_id"] = np.random.randint(1, n_folds + 1, n_gr)
+		groups[movie_id] = df
+	ratings = pd.concat(groups)
+	ratings.index = [i[1] for i in ratings.index]
+	ratings = ratings.groupby("test")
+	train = ratings.get_group(0).drop(columns="test")
+	test = ratings.get_group(1).drop(columns=["test", "fold_id"])
+	return train, test
