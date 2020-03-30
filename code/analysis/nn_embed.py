@@ -5,19 +5,13 @@ import pandas as pd
 train, test, features = data.load_train_test_and_feature_list()
 
 # Train NN
-# for type in ["RegressorRelu6", "RegressorSigmoid", "Ordinal", "Classifier"]:
-for type in ["RegressorSigmoid"]:
+for type in ["Regressor", "RegressorRelu6", "RegressorSigmoid", "Ordinal", "Classifier"]:
     for layers in [
-        #[(1024, "relu"), (128, "relu")],
-        #[(512, "relu"), (128, "relu")],
-        #[(512, "relu"), (64, "relu")],
-        #[(256, "relu"), (64, "relu")],
-        [(128, "relu"), (64, "relu"), (64, "relu")],
+        [(256, "relu"), (128, "relu"), (64, "relu")],
+        [(256, "relu"), (64, "relu"), (64, "relu"), (64, "relu")],
     ]:
-        #for n_embed_users in [16, 32, 64, 128]:
-        for n_embed_users in [128]:
-            for n_embed_movies in [16, 32, 64, 128]:
-            for n_embed_movies in [128]:
+        for n_embed_users in [64, 128]:
+            for n_embed_movies in [64, 128]:
                 nn = models.NNEmbed(
                     type=type,
                     layers=layers,
