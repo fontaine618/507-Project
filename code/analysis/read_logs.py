@@ -34,14 +34,13 @@ def read_logs(metrics: pd.DataFrame):
         df = df.append(metrics.iloc[m].append(pd.Series(d)), ignore_index=True)
     return df
 
+# NN
 metrics = pd.read_table("models/log/nn.tsv", index_col="description")
 df = read_logs(metrics)
 df["layers"] = [str(l) for l in df["layers"]]
 df_features = df.set_index(["use_features", "type", "n_embed_users", "n_embed_movies", "layers"]).drop(columns=[
     "num_epochs", "seed", "device", "lr", "n_movies", "n_users", "batch_size", "time"
 ])
-
-
 
 metrics = pd.read_table("models/log/nn_nofeatures.tsv", index_col="description")
 df = read_logs(metrics)
@@ -52,5 +51,16 @@ df_nofeatures = df.set_index(["use_features", "type", "n_embed_users", "n_embed_
 
 df = pd.concat([df_features, df_nofeatures])
 
-df["cv_mse"].sort_values(ascending=True)
-df["cv_accuracy"].sort_values(ascending=False)
+df["cv_mse"].sort_values(ascending=False)
+df["cv_accuracy"].sort_values(ascending=True)
+
+bests = df[(df["cv_mse"] < 1.02) | (df["cv_accuracy"] > 0.378)]
+bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+
+# KNN
+metrics = pd.read_table("models/log/knn.tsv", index_col="description")
+df = read_logs(metrics)
+df_knn = df.set_index(["type", "n_neighbors", "user_prop", "tag_prop"]).drop(columns=[
+    "time"
+])
+df_knn[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
