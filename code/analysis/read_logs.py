@@ -63,4 +63,6 @@ df = read_logs(metrics)
 df_knn = df.set_index(["type", "n_neighbors", "user_prop", "tag_prop"]).drop(columns=[
     "time"
 ])
-df_knn[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+df_knn.sort_index(level=[0, 1, 2, 3], inplace=True)
+bests = df_knn[(df_knn["cv_mse"] < 1.02) | (df_knn["cv_accuracy"] > 0.378)]
+bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
