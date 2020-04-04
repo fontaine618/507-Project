@@ -16,7 +16,7 @@
 
 \begin{frontmatter}
 
-\title{{\Large STATS 507 Project Report:} \\ 
+\title{{\Large STATS 507 Project Preliminary Report:} \\ 
 \bf \texttt{MovieLens} Datasets---Predicting and Analyzing User Ratings of Movies}
 \runtitle{\texttt{MovieLens}---Predicting and Analyzing Movie Ratings}
 
@@ -133,26 +133,96 @@ The training set consists of 75\% of the dataset (\num{71035} ratings) and the t
 For consistency of results, the splitting was kept constant throughout the analysis.
 To insure adequate representation of all movies in each sets, we proceeded to a stratified sampling of ratings within movies.
 
-Furthermore, the training set was split into cross-validation sets. 
+Furthermore, the training set was split into cross-validation sets in order to perform model tuning and model selection. 
 In particular, the \num{71035} ratings were each assigned to one of 5 folds randomly, yielding training sets of size \num{56828}, on average, and validations sets of size \num{14207}, on average. 
 Again, this splitting was kept constant throughout the analysis.
 
 %------------------------------------------------------------------------------
 \subsection{Modeling}\label{subsec:method.models}
 
-Describe models, what are the tuning parameters, etc.
-
 %------------------------------------------------------------------------------
 \subsubsection{K-Nearest-Neighbors}\label{subsubsec:method.models.knn}
+
+The \textit{$K$-nearest-neighbors} ($K$-NN) method is a non-parametric predictive model. 
+Given a dataset of $n$ examples $(\bx_i, y_i)_{i=1}^n$, the prediction for a new $\bx$ is obtained as follows: find the $K$ indices $i_1\ddd i_K\in[n]$ such that the distances $d(\bx, \bx_{i_k})$ are minimized and aggregate the responses $y_{i_1}\ddd y_{i_K}$ into the prediction $\hat{y}$.
+To completely determine a $K$-NN model, we need to specify the number of neighbors $K$, the distance function $d$ as well as the aggregation method.
+
+%------------------------------------------------------------------------------
+\paragraph{Distance function.}\label{par:method.models.knn.distance}
+
+Our feature space consists predominently of three types of information: movie genres (19 dimensions, encoded as 0/1), movie tags (1128 dimensions, in $[0,1]$) and user information (24 dimensions, various). Thus, our feature space has \num{1171} dimensions. 
+
+We consider the Euclidean distance $d(\bx,\bx')=\Vert\bx-\bx'\Vert_2$ for our distance function, but we proceed to some transformation and parameterization to control the behaviour of the distance. 
+
+First, we standardize the features to get a mean of 0 and a variance of 1 across all examples. This step is crucial for any $K$-NN model using a general distance such as the Euclidean distance since features with different scales will have a lot more weight in the total distance. For example, all of our features are between 0 and except for the user age which varies from 7 to 73 and if we do not standardize this features, the $K$-NN will only match examples of very similar ages irrespectively of the other features.
+
+Second, to account for the disproportional dimensions of the three groups of features as well as the relative importance of these groups, we introduce two parameters in the distance function. We fix the genre contribution to the distance to 1 and consider two multiplying factors $\alpha_\text{tags}, \alpha_\text{user}\geqslant 0$, respectively for tag and users. Then, we transform the standardized features by scaling the correponding groups of features:
+\begin{equation*}
+	\bx:=(\bx_\text{genres}, \bx_\text{tags}, \bx_\text{user})
+	\quad\mapsto\quad
+	\tilde{\bx}:=(\bx_\text{genres}, \alpha_\text{tags}\bx_\text{tags}, \alpha_\text{user}\bx_\text{user})
+\end{equation*}
+This rescaling has the effect of inflating or deflating the contribution of a group of features to the total distance; tuning $\alpha_\text{tags}$ and $\alpha_\text{user}$ can therefore improve the performance of the model by using a more adequate distance.
+
+The features naturally encode the movie and the user. Indeed, two examples of ratings on the same movies will have a distance discout as $1147$ features will be identical and do not contribute to the distance at all. Similarly ratings made by the same user will have a distance discount as $24$ features will be identical. Then, for appropriate values of $\alpha_\text{tags}$ and $\alpha_\text{user}$, we expect the set neighbors of some $\bx$ to include ratings made by the same users as well as ratings on the same movie.
+
+%------------------------------------------------------------------------------
+\paragraph{Aggregation.}\label{par:method.models.knn.agg}
+
+Since our responses---the ratings---take discrete numerical values, we consider two aggregation methods. First, the \textit{regression} approach consists of simply averaging the $K$ responses: $\hat{y} = \frac 1K \sum_{k=1}^{K} y_{i_k}$. Second, the \textit{classfication} approach is to set the prediction $\hat{y}$ using a majority vote: $\hat{y} = \argmax_{y\in[5]}\sum_{k=1}^{K} \ind(y=y_{i_k})$. It is worth noting that the classification approach loses the ordinal property of ratings: if the $K$ neighbors have ratings equal to $(1,1,5,5,5)$, then the prediction would be $5$ for classification while regression would predict $3.4$.
 
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.knn.impl}
 
+We implement our $K$-NN models using the \texttt{sklearn.neighbors} modules \citep{scikit-learn}: the classification predictions are made using \texttt{KNeighborsClassifier} and the regression predictions are made using \texttt{KNeighborsRegressor}. We use default settings except, obviously, for the number of neighbors. Our model has four tuning directions: aggregation method, number of neighbors and the two multiplers $\alpha_\text{tags},\alpha_\text{user}\geqslant 0$.
+
 %------------------------------------------------------------------------------
 \subsubsection{Neural Networks}\label{subsubsec:method.models.nn}
 
+Our second predictive model uses a neural network (NN) approach. As input, we have the movie id, the movie genre and tags, the user id and information; as output, we have the rating. 
+To fully define the network architecture, we need to specify how we treat the ids, the hidden layers structure, the final transformation and the loss function. 
+A graphical representation of the NN can be found in \Cref{fig:method.models.nn}.
+
+%------------------------------------------------------------------------------
+\paragraph{Movie and user embeddings.}\label{par:method.models.nn.embed}
+
+While genre, tags and user details contains \textit{some} information about the movie and user, they do not capture the full description of these two object with respect to the ratings. 
+In particular, without these ids, two movies with identical features will be treated identically by the network even though one might be inherently better than the other (e.g., better ratings).
+Similarly, two users with identical features cannot be distinguished even tough they might have different rating habits or movie preferences.
+Also, simply encoding the ids in a \textit{one-hot} fashion does not abstract the latent features of interest, which are most likely shared between some movies and some users. 
+Thus, we augment the feature input with movie and user embeddings, which adds a fixed number of features, learned by the model, to each example. 
+
+
+%------------------------------------------------------------------------------
+\paragraph{Hidden layers.}\label{par:method.models.nn.hidden}
+
+Given the augmented features, we include multiple fully-connected layers with linear nodes (with bias) linked thourgh some activation function. We consider the ReLU and sigmoid activation functions as well as different numbers of layers and of hidden nodes.
+
+%------------------------------------------------------------------------------
+\paragraph{Transformation and loss function.}\label{par:method.models.nn.transform}
+
+As was mentionned in the description of the $K$-NN model (\Cref{subsubsec:method.models.knn}), our discrete numerical response can be treated in multiple ways: for this NN approach we consider five such treatments.
+
+First, a simple regression scheme can be employed. In this case, we treat the ratings as a continuous output. We connect the last hidden layer to the ratings using an identity link and use the squared error loss as our optimization criterion.
+
+Second and third, we can utilize the fact that our numerical outcome as a fixed, finite range. Indeed, since ratings take values between 1 and 5, we can force the network to produce predictions within or close to that range. In practice, this has the effect of not penalizing as much predictions that are away from the $[1,5]$ range: such predictions could be interpreted as that the model is really confident that the prediction should be at the boundary. To procede as such we consider to simply clip the predictions to the range $[0,6]$, which is commonly known as the ReLU6 transformation. Alternativley, we consider a fixed sigmoid transformed mapped to the interval $(-2,8)$ which is fairly linear for the observed values but contracts predictions far from the true range closer to possible values.
+
+Forth, we can treat our responses as five classes where only one is observed per example. In that case, we encode the ratings in the \textit{one-hot} fashion, that is, 4 gets encoded as $(0,0,0,1,0)$. Then, the final layer is transformed using the usual softmax function and the loss function used is the binary cross-entropy. Again, this encoding loses the ordinal nature of the ratings.
+
+Fifth, we can choose a different encoding for the five classes that will reflect ordering of ratings. Indeed, we can encode a 4 as $(1,1,1,1,0)$ and model the responses in the multi-label classification way. Then, since all encoded responses have this ordinal structure, the NN will reproduce it in its predictions. In that case, we perform a sigmoid transformation on the five final nodes before comparing them to the encoded ratings; the loss function is again the binary cross-entropy.
+
+
+
+
+\begin{figure}
+\input{./diagrams/nn.tex}
+\caption{Neural network architecture.\label{fig:method.models.nn}}
+\end{figure}
+
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.nn.impl}
+
+Our NN models are implemented using the \texttt{PyTorch} module \citep{paszke2017automatic} using stochastic gradient descent. We use a fixed learning rate of \num{0.01}, batch size of \num{512} and number of epochs of \num{50}. For this model, we have five tuning directions: movie and user embidding sizes, hidden layers number and sizes and the final transformation.
 
 %------------------------------------------------------------------------------
 \subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
