@@ -20,6 +20,7 @@ class SVD(Model):
     def add_train_data(self, df, response = "rating", features = ["user_id", "movie_id"]):
         self.df = df
         self.response = response
+        self.features = features
         feature1 = features[0]
         feature2 = features[1]
 
@@ -105,3 +106,32 @@ class SVD(Model):
             log_file.write(
                 "\n" + "\t".join(entries)
             )
+
+    def cv(self):
+        metrics = pd.DataFrame(columns=[
+            "cv_accuracy",
+            "cv_precision",
+            "cv_recall",
+            "cv_mae",
+            "cv_mse"
+        ])
+        # with Pool(5) as pool:
+        #	cv_metrics = pool.map(self._do_one_fold, range(1, 6))
+        cv_metrics = [self._do_one_fold(i) for i in range(1, 6)]
+        for i, res in enumerate(cv_metrics):
+            metrics.loc[i] = list(res.values())
+        self.metrics.update(metrics.mean().transpose().to_dict())
+
+    def _do_one_fold(self, i):
+        fit = SVD(**self.options)
+        fit.add_train_data(self.df[self.df["fold_id"] != i], self.response, self.features)
+        # fit.train()
+        fit.test(self.df[self.df["fold_id"] == i])
+        cv_metrics = {
+            "cv_accuracy": fit.metrics['test_accuracy'],
+            "cv_precision": fit.metrics['test_precision'],
+            "cv_recall": fit.metrics['test_recall'],
+            "cv_mae": fit.metrics['test_mae'],
+            "cv_mse": fit.metrics['test_mse']
+        }
+        return cv_metrics

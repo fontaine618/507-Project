@@ -1,3 +1,4 @@
+
 import data
 import models
 from multiprocessing import Pool
@@ -98,13 +99,15 @@ import pandas as pd
 
 
 #Train svd
-# for embed_dim in [10, 20, 50]:
-# 	for iter_nums in [20, 30, 50]:
-# 		svd = models.SVD(embed_dim=embed_dim, iter_nums=iter_nums)
-# 		svd.add_train_data(train, "rating", features)
-# 		svd.train()
-# 		svd.test(test)
-# 		svd.log()
+train, test = data.load_train_test_ratings()
+for embed_dim in [10]:
+	for iter_nums in [20]:
+		svd = models.SVD(embed_dim=10, iter_nums=20)
+		svd.add_train_data(train, "rating", ["user_id", "movie_id"])
+		svd.train()
+		svd.cv()
+		svd.test(test)
+		svd.log()
 
 ##play with RBM
 
