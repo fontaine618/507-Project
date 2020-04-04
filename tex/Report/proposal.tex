@@ -2,6 +2,10 @@
 \RequirePackage[OT1]{fontenc}
 \RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{amsthm,amsmath,natbib,booktabs,cleveref}
+\newcommand{\cexp}[1]{\left<#1\right>}
+\usepackage{bbm}
+\newcommand{\onebb}{\mathbbm{1}}
+\newcommand{\Ebb}{\mathbb{E}}
 
 % put your definitions there:
 \endlocaldefs
@@ -146,10 +150,90 @@ Describe models, what are the tuning parameters, etc.
 
 %------------------------------------------------------------------------------
 \subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
+Building a recommendation system by doing matrix completion is one of "collaborative filtering" techniques. This means we will try to suggest movies to an user by inspecting the ratings of "similar" users. To be more specific, it is assumed that the taste, or the ratings, made by users follows some low-rank structure, and use that assumption to make prediction. 
+
+Let the hyper parameters embedded dimension be $k$ and the iteration $iter\_nums$ We train the test set as follows
+
+1. Create a pivot matrix $A$ in which rows are users and columns are movies. The (i,j)-cell of the matrix will be the visible rating of user i for movie j, NA if there is no information about that in the train set. We also create a masked matrix which indicate which cell in pivot matrix is NA. Fill the NA cells in $A$ with '0'.
+
+2. For each t in range($iter\_num$): 
+\begin{enumerate}
+	\item Fill all the non-masked cell in $A$ with the original visible rating.
+	\item Approximate $A$ by its truncated SVD. 
+\end{enumerate}
+By iterating two steps above, it allows us to reuse the visible information over and over, and extract the low rank structure of ratings. It is proved that if the underlying structure is indeed low-rank, and the masked matrix is not too dense, then this procedure can reconstruct the original matrix. (add details)
+
+\section{Restricted Boltzmann Machine}
+Similar to matrix completion, Restricted Boltzmann Machine (RBM) is also a collaborative filtering method. It assumes ratings of users are affected by some latent binary variables. So that we construct a probabilistic model where there is $F$ hidden nodes in total, and a bipartite graph for each user, connecting the hidden variables with the visible ratings. 
 
 %------------------------------------------------------------------------------
 \subsubsection{Restricted Bolztmann Machine}\label{subsubsec:method.models.rbm}
 
+\textbf{Set up Model}
+
+Denote hidden variables by $\textbf{h} = (h_1, h_2,\dots, h_F)$ and suppose there are $K$ rating scores in total ($5$ for our data set). For now, to reduce the burden of notation, we only consider the model for each user and will talk about the connection between them later. For an user, suppose he rated $m$ movie $1, \dots, m$, and we write the visible ratings $\textbf{V} = (v_i^k)_{i,k}$ where $v_i^k = 1$ if he rates $k$ for movie $i$, and $0$ otherwise. The generative model is defined by
+\begin{equation}\label{GenModelRBM}
+p(\textbf{V}, \textbf{h}) = \dfrac{1}{Z} \exp(-E(\textbf{V}, \textbf{h})),
+\end{equation}
+where $Z = \sum_{\textbf{V}', \textbf{h}'}$ is the normalization. The term $E(V, h)$ is so called Energy and defined by
+\begin{equation}\label{EnergyRBM}
+E(V,h) = - \sum_{i=1}^{m} \sum_{j=1}^{F} \sum_{k=1}^{K} W_{ij}^k h_j v_i^k - \sum_{i=1}^{m} \sum_{k=1}^{K} b_i^k v_i^k - \sum_{j=1}^{F} h_j b_j,
+\end{equation}
+where $W_{ij}^k$ is the weight connect from $h_j$ to $v_i^k$, $b_i^k$ is bias for $v_i^k$ and $b_j$ is the bias for $h_j$. Therefore, each user has different bipartite graph model and visible ratings $\textbf{V}$, but they all share the same weight $(W_{ij}^k)$ and bias $(b_i^k), (b_j)$.   
+
+From this, we can calculate the conditional probability 
+\begin{equation}\label{pv|h}
+p(v_i^k = 1| \textbf{h}) = \dfrac{\exp(b_{i}^{k} + \sum_{j=1}^{F} h_j W_{ij}^k)}{\sum_{l=1}^{k} \exp(b_{i}^{l} + \sum_{j=1}^{F} h_j W_{ij}^l)}, 
+\end{equation}
+and
+\begin{equation}\label{ph|v}
+p(h_j = 1 | \textbf{V}) = \sigma(b_j + \sum_{i=1}^{m}\sum_{k=1}^{K} v_i^k W_{ij}^{k}),
+\end{equation}
+where $\sigma$ is the sigmoid function. The marginal distribution for $\textbf{V}$ is
+$$p(\textbf{V}) = \dfrac{1}{Z} \sum_{\textbf{h'}} \exp(-E(\textbf{V}, \textbf{h'})).$$
+Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximize the marginal distribution for visible ratings $\textbf{V}$, which is known as Maximum Likelihood method. We will employ the gradient descent to find the minimizer. 
+
+\textbf{Learning}
+
+We need to compute the gradient of $\log p(\textbf{V})$ in order to perform gradient ascent. By chain's rule
+\begin{align*}
+\dfrac{\partial \log p(\textbf{V})}{\partial W_{ij}^{k}} &= \dfrac{1}{p(\textbf{V})} \dfrac{\partial p(\textbf{V})}{\partial W_{ij}^{k}} \\
+& = \dfrac{1}{p(\textbf{V})} \left(\dfrac{\sum_{\textbf{h}} \onebb_{[h_j = 1, v_{i}^{k} = 1]} p(\textbf{V}, \textbf{h})}{Z} - \dfrac{p(\textbf{V}) \sum_{\boldsymbol{\nu}, \textbf{h}}\onebb_{[h_j = 1, \boldsymbol{\nu}_{i}^{k} = 1]} p(\boldsymbol{\nu}, \textbf{h})}{Z} \right)\\
+& = \Ebb_{h|\textbf{V}}(v_i^k h_j) - \Ebb(\nu_i^k h_j)\\
+& =: \cexp{v_i^k h_j}_{data} - \cexp{\nu_i^k h_j}_{model}
+\end{align*}
+where $\cexp{\cdot}_{subscript}$ can be understand as conditional expectation with respect to the subscript. 
+Similarly, we have
+\begin{equation}
+\dfrac{\partial p(\textbf{V})}{\partial b_j}  = \Ebb_{h|\textbf{V}} (h_j) - \Ebb(h_j) =  \cexp{h_j}_{data} - \cexp{h_j}_{model},
+\end{equation}
+and 
+\begin{equation}
+\dfrac{\partial p(\textbf{V})}{\partial b_i^k}  = v_i^k - \Ebb(\nu_i^k) = v_i^k - \cexp{\nu_i^k}_{model}.
+\end{equation}
+In each equation, it is well-known to call the first term "positive statistics" and second term "negative statistics". So we have the analytical representation of gradient of weights and biased terms. In every equation, the first term is easy to compute thanks to \eqref{ph|v}. However, computing the terms $\cexp{\nu_{i}^{k}}_{model}, \cexp{h_j}_{model}$, and $\cexp{\nu_{i}^{k}}_{model}$ requires to take the sum over all value of $\boldsymbol{\nu}, \textbf{h}$, which takes exponential time and makes the algorithm inefficiently. We will instead use the Contrastive Divergence (CD) (Hinton, 2002): Approximating the $\cexp{\nu_i^k h_j}_{model}$ with $\cexp{\nu_i^k h_j}_{recon}$, which  is the approximated construction of $\cexp{\nu_i^k h_j}_{model}$ by using an idea similar to Gibbs' sampler.
+
+\textbf{Computing gradient using Constrastive Divergence}
+
+The idea behind Contrastive Divergence (Hilton 2002) is to approximate gradient by difference of two Kullback-Leibler divergences, but ignores one trickly term (add details). Although this is a crude approximation, it turns out to work really well in many applications. The Constrastive Divergence with $n$ steps ($CD_n$) can be interpreted as follows. Given the visible ratings $\textbf{V}$, first we sample binary value for hidden units $h_{data} = h$ by equation \eqref{ph|v}. Then we do $n$ steps of Gibbs sampling, each contains two smaller steps
+\begin{enumerate}
+	\item Sample $\boldsymbol{\nu} \leftarrow \boldsymbol{h}$ based on equation \eqref{pv|h}.
+	\item Sample $\boldsymbol{h} \leftarrow \boldsymbol{\nu}$ based on equation \eqref{ph|v}.
+\end{enumerate}
+To derive the positive statistics, we use the value of data $\textbf{V}$ and $h_{data}$. Although we can calculate it analytically using \eqref{ph|v}, but using the sample values can reduce the noise when we take the difference with the negative statistics. Hence we have
+$$\cexp{v_i^k h_j}_{data} \leftarrow v_i^k h_{data, j}, \quad \cexp{h_j}_{data} \leftarrow h_{data, j}$$
+When collect the negative statistics, it is advised in Hilton that in the last step, we should only collect $\boldsymbol{h}$ as the probability $p(\textbf{h}|\boldsymbol{\nu})$ (but not sample from it), and have     
+$$\cexp{\nu_i^k h_j}_{recon} \leftarrow \nu_i^k h_{j},\quad \cexp{h_j}_{recon} \leftarrow h_{data, j},\quad \cexp{\nu_i^k}_{recon} \leftarrow \nu_i^k.$$
+
+\textbf{Making prediction}
+
+Knowing a set of visible unit $\textbf{V}$, we can predict rating for a new movie by using Bayes' rule and marginalize $\textbf{h}$
+\begin{align*}
+p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
+&  \propto \sum_{\textbf{h}} p(v_q^{k} = 1, \textbf{V}, \textbf{h})\\
+& \propto \exp(b_k^q) \prod_{j=1}^{q} \sum_{h_j\in \{0,1\}} \exp(\sum_{il} v_i^{l} h_j W_{ij}^{l} + h_j W_{qj}^{k} + h_jb_j)\\
+& = \exp(b_k^q) \prod_{j=1}^{q} \left( 1 +  \exp(\sum_{il} v_i^{l} W_{ij}^{l} +  W_{qj}^{k} + b_j)\right)
+\end{align*}
 
 
 

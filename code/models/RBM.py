@@ -126,7 +126,11 @@ class RBM(Model):
 
         def total_free_energy(W, bv, bh):
             list_free_energy = []
+<<<<<<< HEAD
             #for u in list_feature1:
+=======
+            # for u in list_feature1:
+>>>>>>> 20423e0f1f51fcd83fa005b6dd4fb911b075499d
 
 
             free_energy = np.mean(list_free_energy)

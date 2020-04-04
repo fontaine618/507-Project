@@ -56,8 +56,8 @@ class SVD(Model):
 
         # compute metrics
         acc = accuracy_score(y_train, y_train_pred_class)
-        prec = precision_score(y_train, y_train_pred_class, average="weighted")
-        rec = recall_score(y_train, y_train_pred_class, average="weighted")
+        prec = precision_score(y_train, y_train_pred_class, average="weighted", zero_division=0)
+        rec = recall_score(y_train, y_train_pred_class, average="weighted", zero_division=0)
         mae = mean_absolute_error(y_train, y_train_pred)
         mse = mean_squared_error(y_train, y_train_pred)
         self.metrics.update({

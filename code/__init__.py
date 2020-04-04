@@ -99,10 +99,11 @@ import pandas as pd
 
 
 #Train svd
+pd.options.mode.chained_assignment = None
 train, test = data.load_train_test_ratings()
-for embed_dim in [10]:
-	for iter_nums in [20]:
-		svd = models.SVD(embed_dim=10, iter_nums=20)
+for embed_dim in [5, 10, 15, 20, 35]:
+	for iter_nums in [10, 20, 30]:
+		svd = models.SVD(embed_dim=embed_dim, iter_nums=iter_nums)
 		svd.add_train_data(train, "rating", ["user_id", "movie_id"])
 		svd.train()
 		svd.cv()
