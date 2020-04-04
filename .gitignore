@@ -12,3 +12,5 @@
 code/data/tag-genome/tag_relevance.dat
 *.pyc
 code/__pycache__/
+code/.idea/
+code/models/__pycache__/

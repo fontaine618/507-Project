@@ -146,7 +146,13 @@ Describe models, what are the tuning parameters, etc.
 \subsubsection{K-Nearest-Neighbors}\label{subsubsec:method.models.knn}
 
 %------------------------------------------------------------------------------
+\paragraph{Implementation details.}\label{par:method.models.knn.impl}
+
+%------------------------------------------------------------------------------
 \subsubsection{Neural Networks}\label{subsubsec:method.models.nn}
+
+%------------------------------------------------------------------------------
+\paragraph{Implementation details.}\label{par:method.models.nn.impl}
 
 %------------------------------------------------------------------------------
 \subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
@@ -163,13 +169,16 @@ Let the hyper parameters embedded dimension be $k$ and the iteration $iter\_nums
 \end{enumerate}
 By iterating two steps above, it allows us to reuse the visible information over and over, and extract the low rank structure of ratings. It is proved that if the underlying structure is indeed low-rank, and the masked matrix is not too dense, then this procedure can reconstruct the original matrix. (add details)
 
-\section{Restricted Boltzmann Machine}
+%------------------------------------------------------------------------------
+\paragraph{Implementation details.}\label{par:method.models.svd.impl}
+
+%------------------------------------------------------------------------------
+\subsubsection{Restricted Boltzmann Machine}\label{subsubsec:method.models.rbm}
 Similar to matrix completion, Restricted Boltzmann Machine (RBM) is also a collaborative filtering method. It assumes ratings of users are affected by some latent binary variables. So that we construct a probabilistic model where there is $F$ hidden nodes in total, and a bipartite graph for each user, connecting the hidden variables with the visible ratings. 
 
 %------------------------------------------------------------------------------
-\subsubsection{Restricted Bolztmann Machine}\label{subsubsec:method.models.rbm}
+\paragraph{Model description.}\label{par:method.models.rbm.model}
 
-\textbf{Set up Model}
 
 Denote hidden variables by $\textbf{h} = (h_1, h_2,\dots, h_F)$ and suppose there are $K$ rating scores in total ($5$ for our data set). For now, to reduce the burden of notation, we only consider the model for each user and will talk about the connection between them later. For an user, suppose he rated $m$ movie $1, \dots, m$, and we write the visible ratings $\textbf{V} = (v_i^k)_{i,k}$ where $v_i^k = 1$ if he rates $k$ for movie $i$, and $0$ otherwise. The generative model is defined by
 \begin{equation}\label{GenModelRBM}
@@ -193,7 +202,8 @@ where $\sigma$ is the sigmoid function. The marginal distribution for $\textbf{V
 $$p(\textbf{V}) = \dfrac{1}{Z} \sum_{\textbf{h'}} \exp(-E(\textbf{V}, \textbf{h'})).$$
 Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximize the marginal distribution for visible ratings $\textbf{V}$, which is known as Maximum Likelihood method. We will employ the gradient descent to find the minimizer. 
 
-\textbf{Learning}
+%------------------------------------------------------------------------------
+\paragraph{Learning.}\label{par:method.models.rbm.learning}
 
 We need to compute the gradient of $\log p(\textbf{V})$ in order to perform gradient ascent. By chain's rule
 \begin{align*}
@@ -213,7 +223,8 @@ and
 \end{equation}
 In each equation, it is well-known to call the first term "positive statistics" and second term "negative statistics". So we have the analytical representation of gradient of weights and biased terms. In every equation, the first term is easy to compute thanks to \eqref{ph|v}. However, computing the terms $\cexp{\nu_{i}^{k}}_{model}, \cexp{h_j}_{model}$, and $\cexp{\nu_{i}^{k}}_{model}$ requires to take the sum over all value of $\boldsymbol{\nu}, \textbf{h}$, which takes exponential time and makes the algorithm inefficiently. We will instead use the Contrastive Divergence (CD) (Hinton, 2002): Approximating the $\cexp{\nu_i^k h_j}_{model}$ with $\cexp{\nu_i^k h_j}_{recon}$, which  is the approximated construction of $\cexp{\nu_i^k h_j}_{model}$ by using an idea similar to Gibbs' sampler.
 
-\textbf{Computing gradient using Constrastive Divergence}
+%------------------------------------------------------------------------------
+\paragraph{Computing gradient using Constrastive Divergence.}\label{par:method.models.rbm.grad}
 
 The idea behind Contrastive Divergence (Hilton 2002) is to approximate gradient by difference of two Kullback-Leibler divergences, but ignores one trickly term (add details). Although this is a crude approximation, it turns out to work really well in many applications. The Constrastive Divergence with $n$ steps ($CD_n$) can be interpreted as follows. Given the visible ratings $\textbf{V}$, first we sample binary value for hidden units $h_{data} = h$ by equation \eqref{ph|v}. Then we do $n$ steps of Gibbs sampling, each contains two smaller steps
 \begin{enumerate}
@@ -225,7 +236,8 @@ $$\cexp{v_i^k h_j}_{data} \leftarrow v_i^k h_{data, j}, \quad \cexp{h_j}_{data} 
 When collect the negative statistics, it is advised in Hilton that in the last step, we should only collect $\boldsymbol{h}$ as the probability $p(\textbf{h}|\boldsymbol{\nu})$ (but not sample from it), and have     
 $$\cexp{\nu_i^k h_j}_{recon} \leftarrow \nu_i^k h_{j},\quad \cexp{h_j}_{recon} \leftarrow h_{data, j},\quad \cexp{\nu_i^k}_{recon} \leftarrow \nu_i^k.$$
 
-\textbf{Making prediction}
+%------------------------------------------------------------------------------
+\paragraph{Making predictions.}\label{par:method.models.rbm.pred}
 
 Knowing a set of visible unit $\textbf{V}$, we can predict rating for a new movie by using Bayes' rule and marginalize $\textbf{h}$
 \begin{align*}
@@ -236,40 +248,11 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 \end{align*}
 
 
-
-
-
-
 %------------------------------------------------------------------------------
-\subsection{Implementation}\label{subsec:method.impl}
-
-Briefly mention how the implementation is done (e.g. which package we use and important details)
-
-%------------------------------------------------------------------------------
-\subsubsection{K-Nearest-Neighbors}\label{subsubsec:method.impl.knn}
-
-%------------------------------------------------------------------------------
-\subsubsection{Neural Networks}\label{subsubsec:method.impl.nn}
-
-%------------------------------------------------------------------------------
-\subsubsection{Matrix completion}\label{subsubsec:method.impl.svd}
-
-%------------------------------------------------------------------------------
-\subsubsection{Restricted Bolztmann Machine}\label{subsubsec:method.impl.rbm}
+\paragraph{Implementation details.}\label{par:method.models.rbm.impl}
 
 
 
-
-
-%We will investigate the first question using four different approaches and the best predictive model will be selected to make inference and answer our secondary research question. The four methods that we consider are k-Nearest Neighbors (k-NN), Neural Network, Matrix Completion and Restricted Boltzmann Machine. 
-
-%Our first approach is using a k-NN algorithm. The idea is to define some distance measure between users as well as between movies, which allows to predict ratings using user-movie pairs that are similar to it. We will implement k-NN algorithm with different distances such as Euclidian distance and cosine dissimilarity. This is the most simple model that we consider, and it is pointed out in \cite{toscher2009bigchaos} that kNN can be outperformed by simple factor models.
-
-%Secondly, we will use Neural Networks to predict the movie ratings. The input layer is information about each user and movie genres and tags and the output is the rating of the user for the movie. The architecture of the network (number of players, number of nodes and learning rate) will be adjusted to find a good model. Similar idea could be found in \cite{tang2015user}, where they build the model with the input layers containing information about user-word instead of user-genre. 
-
-%The third approach, Matrix Completion, became famous from the Netflix movie-rating challenge \cite{bennett2007netflix}. This competition was held by Netflix, a movie-rental company, in effort to improve the recommendation system for their customers. The winner of this competition used many statistical techniques, where the Singular Value Decomposition (SVD) was the most important. The idea here is that our user-movie matrix is a missing-valued matrix and, by assuming it is low-rank, we can use SVD iteratively until our matrix converges to a completed matrix, which gives us the predicted rating of any movie by any user. Despite of being efficient, this method often overfit the data, so we will also consider a penalized version.
-
-%Finally, we will implement Restricted Boltzmann Machine (RBM) \cite{10.1145/1273496.1273596}. RBM is a probabilistic model, where we assume that there are hidden layers of variables affecting the visible users' ratings, and come up with the update rule to learn the distribution of these hidden variables. It is claimed by \cite{10.1145/1273496.1273596} that RBM can outperform SVD models. 
 
 
 %------------------------------------------------------------------------------
