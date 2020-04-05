@@ -205,7 +205,13 @@ As was mentionned in the description of the $K$-NN model (\Cref{subsubsec:method
 
 First, a simple regression scheme can be employed. In this case, we treat the ratings as a continuous output. We connect the last hidden layer to the ratings using an identity link and use the squared error loss as our optimization criterion.
 
-Second and third, we can utilize the fact that our numerical outcome as a fixed, finite range. Indeed, since ratings take values between 1 and 5, we can force the network to produce predictions within or close to that range. In practice, this has the effect of not penalizing as much predictions that are away from the $[1,5]$ range: such predictions could be interpreted as that the model is really confident that the prediction should be at the boundary. To procede as such we consider to simply clip the predictions to the range $[0,6]$, which is commonly known as the ReLU6 transformation. Alternativley, we consider a fixed sigmoid transformed mapped to the interval $(-2,8)$ which is fairly linear for the observed values but contracts predictions far from the true range closer to possible values.
+Second and third, we can utilize the fact that our numerical outcome as a fixed, finite range. Indeed, since ratings take values between 1 and 5, we can force the network to produce predictions within or close to that range. In practice, this has the effect of not penalizing as much predictions that are away from the $[1,5]$ range: such predictions could be interpreted as that the model is really confident that the prediction should be at the boundary. To procede as such we consider to simply clip the predictions to the range $[0,6]$, which is commonly known as the ReLU6 transformation. Alternativley, we consider a fixed sigmoid transformed mapped to the interval $(-2,8)$ which is fairly linear for the observed values but contracts predictions far from the true range closer to possible values. The three transformations are depicted in \Cref{fig:method.models.nn.functions}.
+
+\begin{figure}[h]
+\centering
+\caption{The three transformations considered at the output node for regression in a neural network. The dashed horizontal lines represent the boundary of observed ratings. \label{fig:method.models.nn.functions}}
+\includegraphics[width=0.8\linewidth]{functions_nn}
+\end{figure}
 
 Forth, we can treat our responses as five classes where only one is observed per example. In that case, we encode the ratings in the \textit{one-hot} fashion, that is, 4 gets encoded as $(0,0,0,1,0)$. Then, the final layer is transformed using the usual softmax function and the loss function used is the binary cross-entropy. Again, this encoding loses the ordinal nature of the ratings.
 
@@ -216,13 +222,13 @@ Fifth, we can choose a different encoding for the five classes that will reflect
 
 \begin{figure}
 \input{./diagrams/nn.tex}
-\caption{Neural network architecture.\label{fig:method.models.nn}}
+\caption{Neural network architecture described in \Cref{subsubsec:method.models.nn}. Black nodes represent observed quantities; white nodes, hidden variables; grey squares, functions.\label{fig:method.models.nn}}
 \end{figure}
 
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.nn.impl}
 
-Our NN models are implemented using the \texttt{PyTorch} module \citep{paszke2017automatic} using stochastic gradient descent. We use a fixed learning rate of \num{0.01}, batch size of \num{512} and number of epochs of \num{50}. For this model, we have five tuning directions: movie and user embidding sizes, hidden layers number and sizes and the final transformation.
+Our NN models are implemented using the \texttt{PyTorch} module \citep{paszke2017automatic} using stochastic gradient descent. We use a fixed learning rate of \num{0.01}, batch size of \num{512} and number of epochs of \num{50}; the activation functions are chosen to be the ReLU function in all cases to reduce the tuning space. For this model, we have five tuning directions: movie and user embidding sizes, hidden layers number and sizes and the final transformation. We also compare whether including the external information improves on simply using the two embeddings.
 
 %------------------------------------------------------------------------------
 \subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
@@ -326,8 +332,53 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 
 
 %------------------------------------------------------------------------------
-\section{Preliminary and Final report}\label{sec:report}
-In our Preliminary report, we wish to address the first question: that is, applying each approach to the \texttt{MovieLens} dataset and compare them. We will present the advantages and disadvantages of each approach and interpret the result. In the Final report, it is expected to have a comprehensible answer for both questions. One more potential question we will address if time allows is to combine the approaches above to derive the best recommendetion algorithm. 
+\section{Results}\label{sec:results}
+
+We perform 5-fold cross-validation on many instances of our models against the training set and produce the \textit{mean sqaured error} (MSE) and prediction accuracy averaged over the 5 folds. For models with numerical predictions, we assign the predicted rating to the nearest integer in the range $[1,5]$.  Models with class predictions simply use the class label as their numerical prediction. 
+
+It is worthwhile to mention that we are in a classification problem with 5 classes so a random assignment would produce 20\% accuracy: we observe accuracies close to 40\%, which is already a great improvement. MSEs less than 1 means that the model predicts, on average, ratings less than 1 point away from the recorded ratings.
+
+We first detail the results for the four models we consider, noting some observation on their CV performance. Then, we proceed to a comparison of the four models in terms of CV and testing.
+
+%------------------------------------------------------------------------------
+\subsection{$K$-Nearest-Neighbors}\label{sebsec:results.knn}
+
+Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.\footnote{The complete logs can be found alongside the projet's code at \url{https://github.com/fontaine618/507-Project/}.} 
+
+As could be expected, regression aggregation performs better in terms of MSE while classification aggregation performs better in terms of prediction accuracy. Also, the value of the tuning parameters $\alpha_\text{user}$ and $\alpha_\text{tags}$ for these best models seems to align with their purpose. Indeed, we observe that the best models require to inflate the importance of user information and deflate that of tags.
+
+\input{./table/knn.tex}
+
+
+%------------------------------------------------------------------------------
+\subsection{Neural Network}\label{sebsec:results.nn}
+
+We trained over 400 instances of the NN approach described in \Cref{subsubsec:method.models.nn}; the results for a selection of the best models can be found in \Cref{tab:results.nn}. We make some observations with regards to the tuning parameters.
+
+First, we observe that including the external features (genre, tags, user info) greatly improves the model as we see a 8\% relative reduction in the respective best MSE and a 5\% relative increase in the best respective accuracy. 
+
+Second, we note that the ordinal transformation does not appear in the best results: inspecting the complete logs, we find that this method performs better than classification in terms of MSE but worse in terms of prediction and is therefore in the middle of the pack in both categories. The classification scheme yields good prediction performance, but we see accuracies similar to those from regression approaches. The three regression transformation---identity, ReLU6 and sigmoid---seem to perform rather similarly with the sigmoid tranform being slightly worse generally.
+
+Third, the best performing models in terms of CV metrics seem to require simpler hidden layers structures: while the experiments included networks with up to four hidden layers, the best models generally contain only two. This exhibits the benefit of using CV for model selection as it prevents overfitting.
+
+
+\input{./table/nn_features.tex}
+
+
+%------------------------------------------------------------------------------
+\subsection{Matrix completion}\label{sebsec:results.svd}
+
+
+%------------------------------------------------------------------------------
+\subsection{Restricted Bolztmann Machine}\label{sebsec:results.rbm}
+
+
+%------------------------------------------------------------------------------
+\subsection{Model comparison}\label{sebsec:results.model}
+
+\Cref{tab:results.model}
+
+\input{./table/model.tex}
 
 %------------------------------------------------------------------------------
 \bibliographystyle{imsart-nameyear}

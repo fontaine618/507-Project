@@ -49,13 +49,19 @@ df_nofeatures = df.set_index(["use_features", "type", "n_embed_users", "n_embed_
     "num_epochs", "seed", "device", "lr", "n_movies", "n_users", "batch_size", "time"
 ])
 
-df = pd.concat([df_features, df_nofeatures])
+df = df_nofeatures
+bests = df[(df["cv_mse"] < 1.08) | (df["cv_accuracy"] > 0.36)]
+bests.index = bests.index.droplevel()
+table = bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+table.sort_values(by="cv_mse", inplace=True)
+table = table.applymap("{0:.4f}".format)
+table.to_latex(
+    buf="../tex/Report/table/nn_nofeatures.tex",
+    caption="sdfsdfs",
+    label="tab:results.nn"
+)
 
-df["cv_mse"].sort_values(ascending=False)
-df["cv_accuracy"].sort_values(ascending=True)
 
-bests = df[(df["cv_mse"] < 1.02) | (df["cv_accuracy"] > 0.378)]
-bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
 
 # KNN
 metrics = pd.read_table("models/log/knn.tsv", index_col="description")
@@ -65,4 +71,11 @@ df_knn = df.set_index(["type", "n_neighbors", "user_prop", "tag_prop"]).drop(col
 ])
 df_knn.sort_index(level=[0, 1, 2, 3], inplace=True)
 bests = df_knn[(df_knn["cv_mse"] < 1.02) | (df_knn["cv_accuracy"] > 0.378)]
-bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+table = bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+table.sort_values(by="cv_mse", inplace=True)
+table = table.applymap("{0:.4f}".format)
+table.to_latex(
+    buf="../tex/Report/table/knn.tex",
+    caption="sdfsdfs",
+    label="tab:results.knn"
+)

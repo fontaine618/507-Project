@@ -1,0 +1,40 @@
+\begin{table}
+\centering
+\caption{sdfsdfs}
+\label{tab:results.nn}
+\begin{tabular}{lrrp{3.5cm}rrrr}
+\toprule
+           & \multicolumn{2}{c}{Embeddings} &     &  \multicolumn{2}{c}{CV} & \multicolumn{2}{c}{Test} \\
+           \cmidrule(lr){2-3}\cmidrule(lr){5-6}\cmidrule(l){7-8}
+Transform & User & Movie & Hidden layers &  MSE & Acc. & MSE & Acc.  \\
+\midrule
+\multicolumn{8}{c}{\textbf{With features}}\\\addlinespace
+ReLU6 & 64 & 128 & (1024, ReLU), (64, ReLU) &  0.9855 &      0.3851 &   0.9552 &        0.3823 \\
+Identity & 64 & 128 & (1024, ReLU), (128, ReLU) &  0.9857 &      0.3778 &   0.9360 &        0.4006 \\
+Sigmoid & 32 & 64  & (1024, ReLU), (256, ReLU), (64, ReLU) &  0.9953 &      0.3803 &   0.9439 &        0.3946 \\
+ReLU6 & 32 & 128 & (1024, ReLU), (256, ReLU), (64, ReLU) &  1.0124 &      0.3735 &   0.9853 &        0.3882 \\
+           & 64 & 128 & (1024, ReLU), (256, ReLU), (64, ReLU) &  1.0137 &      0.3826 &   0.9318 &        0.3974 \\
+           & 32 & 64  & (1024, ReLU), (128, ReLU) &  1.0149 &      0.3709 &   1.0081 &        0.3653 \\
+           &    &     & (1024, ReLU), (64, ReLU) &  1.0162 &      0.3674 &   1.0216 &        0.3614 \\
+           &    & 128 & (512, ReLU), (64, ReLU) &  1.0168 &      0.3695 &   1.0101 &        0.3683 \\
+Identity & 32 & 64  & (512, ReLU), (64, ReLU) &  1.0182 &      0.3665 &   1.0352 &        0.3563 \\
+ReLU6 & 32 & 128 & (1024, ReLU), (128, ReLU) &  1.0183 &      0.3694 &   0.9866 &        0.3775 \\
+           & 64 & 128 & (512, ReLU), (64, ReLU) &  1.0198 &      0.3696 &   0.9878 &        0.3692 \\
+Sigmoid & 64 & 128 & (512, ReLU), (64, ReLU) &  1.0482 &      0.3865 &   1.0510 &        0.3964 \\
+Classifier & 64 & 64  & (1024, ReLU), (64, ReLU) &  1.1232 &      0.3780 &   1.1096 &        0.3864 \\
+           &    &     & (1024, ReLU), (128, ReLU) &  1.1239 &      0.3786 &   1.1156 &        0.3845 \\
+           &    & 128 & (1024, ReLU), (64, ReLU) &  1.1298 &      0.3786 &   1.1110 &        0.3899 \\
+           \midrule
+\multicolumn{8}{c}{\textbf{Without features}}\\\addlinespace
+ReLU6 & 32  & 128 & (512, ReLU), (64, ReLU) &  1.0633 &      0.3620 &   1.0480 &        0.3677 \\
+Identity & 32  & 128 & (512, ReLU), (128, ReLU) &  1.0652 &      0.3576 &   1.0500 &        0.3639 \\
+ReLU6 & 32  & 128 & (512, ReLU), (128, ReLU) &  1.0732 &      0.3621 &   1.0738 &        0.3575 \\
+                 & 64  & 128 & (128, ReLU), (64, ReLU), (64, ReLU) &  1.0741 &      0.3585 &   1.0976 &        0.3487 \\
+Identity & 64  & 128 & (1024, ReLU), (128, ReLU) &  1.0768 &      0.3589 &   1.0982 &        0.3525 \\
+ReLU6 & 32  & 128 & (1024, ReLU), (64, ReLU) &  1.0768 &      0.3617 &   1.0469 &        0.3672 \\
+                 & 64  & 128 & (1024, ReLU), (64, ReLU) &  1.0775 &      0.3604 &   1.0830 &        0.3584 \\
+                 & 32  & 128 & (256, ReLU), (128, ReLU) &  1.0797 &      0.3614 &   1.0701 &        0.3531 \\
+
+\bottomrule
+\end{tabular}
+\end{table}
