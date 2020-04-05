@@ -99,31 +99,32 @@ import pandas as pd
 
 
 #Train svd
-pd.options.mode.chained_assignment = None
-train, test = data.load_train_test_ratings()
-for embed_dim in [5, 10, 15, 20, 35]:
-	for iter_nums in [10, 20, 30]:
-		svd = models.SVD(embed_dim=embed_dim, iter_nums=iter_nums)
-		svd.add_train_data(train, "rating", ["user_id", "movie_id"])
-		svd.train()
-		svd.cv()
-		svd.test(test)
-		svd.log()
+# pd.options.mode.chained_assignment = None
+# train, test = data.load_train_test_ratings()
+# for embed_dim in [4, 5, 8]:
+# 	for iter_nums in [120]:
+# 		svd = models.SVD(embed_dim=embed_dim, iter_nums=iter_nums)
+# 		svd.add_train_data(train, "rating", ["user_id", "movie_id"])
+# 		svd.train()
+# 		svd.cv()
+# 		svd.test(test)
+# 		svd.log()
 
 ##play with RBM
+pd.options.mode.chained_assignment = None
+train, test = data.load_train_test_ratings()
 
-# train, test = data.load_train_test_ratings()
-
-# for num_hidden_nodes in [10, 20, 30, 50]:
-#     for Gibbs_iters in [5, 10, 25]:
-#         for max_iters in [1, 5, 10, 20]:
-#             for learning_rate in [0.01, 0.1, 1, 10]:
-#                 train, test = data.load_train_test_ratings()
-#                 rbm = models.RBM(num_hidden_nodes=num_hidden_nodes, max_iters=max_iters, learning_rate=learning_rate, Gibbs_iters=Gibbs_iters)
-#                 rbm.add_train_data(train, "rating", ["user_id", "movie_id"])
-#                 rbm.train()
-#                 rbm.test(test)
-#                 rbm.log()
+for num_hidden_nodes in [15]:
+    for Gibbs_iters in [5]:
+        for max_iters in [1]:
+            for learning_rate in [0.1, 1]:
+                #train, test = data.load_train_test_ratings()
+                rbm = models.RBM(num_hidden_nodes=num_hidden_nodes, max_iters=max_iters, learning_rate=learning_rate, Gibbs_iters=Gibbs_iters)
+                rbm.add_train_data(train, "rating", ["user_id", "movie_id"])
+                rbm.train()
+                rbm.cv()
+                rbm.test(test)
+                rbm.log()
 
 
 
