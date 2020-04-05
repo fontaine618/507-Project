@@ -344,7 +344,7 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.rbm.impl}
 
-We build and train a RBM model by ourselves using basic modules such as \texttt{numpy} \citep{numpy2011}. There are three turning parameters in the model: the number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation is taken from \cite{hinton2012practical}.
+We build and train a RBM model by ourselves using basic modules such as \texttt{numpy} \citep{numpy2011}. There are three turning parameters in the model: the number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation are taken from \cite{hinton2012practical}.
 
 
 %------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ For the number of hidden nodes, it turns out to be the best when set it around 1
 
 For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much (we need to do sampling for every (movie, user) couple.)
 
-It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
+It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to which is presented in that paper.
 
 \input{./table/rbm.tex}
 
