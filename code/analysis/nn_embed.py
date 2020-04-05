@@ -42,13 +42,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 xs = np.linspace(start=-4, stop=10, num=1000)
 
+plt.style.use('seaborn')
 fig = plt.figure(figsize=(6, 3))
 ax = fig.gca()
-ax.grid(linestyle=":")
 ax.plot(xs, xs, label="Identity")
 ax.plot(xs, np.minimum(np.maximum(xs, 0), 6), label="ReLU6")
 ax.plot(xs, 10. / (1. + np.exp(-(xs - 3.))) - 2., label="Sigmoid")
-ax.legend(title="Function")
+ax.legend(title="Function", framealpha=1.0, frameon=True)
 ax.hlines([1, 5], xmin=-2, xmax=8, linestyle="--")
 ax.set_xlabel("x")
 ax.set_ylabel("f(x)")
