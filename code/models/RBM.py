@@ -22,6 +22,7 @@ class RBM(Model):
     def add_train_data(self, df, response = "rating", features = ["user_id", "movie_id"]):
         self.df = df
         self.response = response
+        self.features = features
         self.feature1 = features[0]
         self.feature2 = features[1]
 
@@ -141,10 +142,11 @@ class RBM(Model):
         self.W = W
         self.bh = bh
         self.bv = bv
-        print('W is', W)
-        print('bh is ', bh)
-        print('bv is', bv)
-
+        # print('W is', W)
+        # print('bh is ', bh)
+        # print('bv is', bv)
+        df[self.feature1] = df[self.feature1] + 1
+        df[self.feature2] = df[self.feature2] + 1
 
     def train(self):
         mu = self.mu
@@ -155,6 +157,9 @@ class RBM(Model):
         K = self.K
         F = self.options["num_hidden_nodes"]
 
+        self.df[self.feature1] = self.df[self.feature1] - 1
+        self.df[self.feature2] = self.df[self.feature2] - 1
+
         list_feature1 = self.df[self.feature1].unique()
         ##predict on train set
         self.df['pred_rating'] = '0'
@@ -162,7 +167,7 @@ class RBM(Model):
         for u in list_feature1:
             common_term = (vi[u].reshape(1, len(mu[u]) * K) @ np.swapaxes(W[mu[u], :, :], 1, 2).reshape(len(mu[u]) * K,
                                                                                                         F)).squeeze()  ## common term of shape (F,)
-            print(common_term)
+            #print(common_term)
             for q in range(len(mu[u])):
                 ## calculate P(vi_{mu[u][q]}^{k} = 1) for all k, then take expectation with respect to k to have the prediction
                 missing_term = (W[mu[u][q], :, :].reshape(F, K) @ vi[u][q, :].reshape(K, 1)).squeeze()
@@ -171,6 +176,7 @@ class RBM(Model):
 
                 prob = prob / np.sum(prob)  ## normalization for soft prediction
                 predict = np.dot(prob, np.arange(0, K))  ##expectation
+
                 mov_index = self.df[(self.df[self.feature1] == u) & (self.df[self.feature2] == mu[u][q])].index.tolist()[0]
                 self.df.at[mov_index, 'pred_rating'] = predict + 1
 
@@ -192,6 +198,7 @@ class RBM(Model):
         rec = recall_score(y_train, y_train_pred_class, average="weighted", zero_division=0)
         mae = mean_absolute_error(y_train, y_train_pred)
         mse = mean_squared_error(y_train, y_train_pred)
+        class_mse = mean_squared_error(y_train, y_train_pred_class)
 
 
         self.metrics.update({
@@ -199,10 +206,13 @@ class RBM(Model):
             "train_precision": prec,
             "train_recall": rec,
             "train_mae": mae,
-            "train_mse": mse
+            "train_mse": mse,
+            "train_class_mse": class_mse
         })
         print(self.metrics)
         print(self.df)
+        self.df[self.feature1] = self.df[self.feature1] + 1
+        self.df[self.feature2] = self.df[self.feature2] + 1
 
     def test(self, test_df):
         F = self.options["num_hidden_nodes"]
@@ -211,8 +221,8 @@ class RBM(Model):
 
         test_list_feature1 = test_df[self.feature1].unique()
 
-        test_mu = [None] * len(test_list_feature1)  ## list of  movies rated by an user in test set
-        test_vi = [None] * len(test_list_feature1)
+        test_mu = [None] * (max(test_list_feature1) + 1)  ## list of  movies rated by an user in test set
+        test_vi = [None] * (max(test_list_feature1) + 1)
 
         for u in test_list_feature1:
 
@@ -237,6 +247,8 @@ class RBM(Model):
 
                 prob = prob / np.sum(prob)                      ##normalization for soft prediction
                 predict = np.dot(prob, np.arange(0, self.K))    ##expectation
+                #print(test_mu[u][q])
+                #print(sum((test_df[self.feature1] == u) & (test_df[self.feature2] == test_mu[u][q])))
                 mov_index = test_df[(test_df[self.feature1] == u) & (test_df[self.feature2] == test_mu[u][q])].index.tolist()[0]
                 test_df.at[mov_index, 'pred_rating'] = predict + 1
 
@@ -256,17 +268,21 @@ class RBM(Model):
         rec = recall_score(y_test, y_test_pred_class, average="weighted", zero_division=0)
         mae = mean_absolute_error(y_test, y_test_pred)
         mse = mean_squared_error(y_test, y_test_pred)
+        class_mse = mean_squared_error(y_test, y_test_pred_class)
 
         self.metrics.update({
             "test_accuracy": acc,
             "test_precision": prec,
             "test_recall": rec,
             "test_mae": mae,
-            "test_mse": mse
+            "test_mse": mse,
+            "test_class_mse" : class_mse
         })
-
+        test_df[self.feature1] = test_df[self.feature1] + 1
+        test_df[self.feature2] = test_df[self.feature2] + 1
         print(self.metrics)
         print(test_df)
+
 
 
     def log(self, path="models/log/rbm.tsv"):
@@ -281,6 +297,36 @@ class RBM(Model):
             )
 
 
+    def cv(self):
+        metrics = pd.DataFrame(columns=[
+            "cv_accuracy",
+            "cv_precision",
+            "cv_recall",
+            "cv_mae",
+            "cv_mse",
+            "cv_class_mse"
+        ])
+        # with Pool(5) as pool:
+        #	cv_metrics = pool.map(self._do_one_fold, range(1, 6))
+        cv_metrics = [self._do_one_fold(i) for i in range(1, 6)]
+        for i, res in enumerate(cv_metrics):
+            metrics.loc[i] = list(res.values())
+        self.metrics.update(metrics.mean().transpose().to_dict())
+
+    def _do_one_fold(self, i):
+        fit = RBM(**self.options)
+        fit.add_train_data(self.df[self.df["fold_id"] != i], self.response, self.features)
+        # fit.train()
+        fit.test(self.df[self.df["fold_id"] == i])
+        cv_metrics = {
+            "cv_accuracy": fit.metrics['test_accuracy'],
+            "cv_precision": fit.metrics['test_precision'],
+            "cv_recall": fit.metrics['test_recall'],
+            "cv_mae": fit.metrics['test_mae'],
+            "cv_mse": fit.metrics['test_mse'],
+            "cv_class_mse": fit.metrics['test_class_mse']
+        }
+        return cv_metrics
 
 
 

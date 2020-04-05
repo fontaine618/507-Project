@@ -60,12 +60,14 @@ class SVD(Model):
         rec = recall_score(y_train, y_train_pred_class, average="weighted", zero_division=0)
         mae = mean_absolute_error(y_train, y_train_pred)
         mse = mean_squared_error(y_train, y_train_pred)
+        class_mse = mean_squared_error(y_train, y_train_pred_class)
         self.metrics.update({
             "train_accuracy": acc,
             "train_precision": prec,
             "train_recall": rec,
             "train_mae": mae,
-            "train_mse": mse
+            "train_mse": mse,
+            "train_class_mse" : class_mse
         })
 
     def test(self, test_df):
@@ -88,12 +90,14 @@ class SVD(Model):
         rec = recall_score(y_test, y_test_pred_class, average="weighted", zero_division=0)
         mae = mean_absolute_error(y_test, y_test_pred)
         mse = mean_squared_error(y_test, y_test_pred)
+        class_mse = mean_squared_error(y_test, y_test_pred_class)
         self.metrics.update({
             "test_accuracy": acc,
             "test_precision": prec,
             "test_recall": rec,
             "test_mae": mae,
-            "test_mse": mse
+            "test_mse": mse,
+            "test_class_mse": class_mse
         })
 
     def log(self, path="models/log/svd.tsv"):
@@ -113,7 +117,8 @@ class SVD(Model):
             "cv_precision",
             "cv_recall",
             "cv_mae",
-            "cv_mse"
+            "cv_mse",
+            "cv_class_mse"
         ])
         # with Pool(5) as pool:
         #	cv_metrics = pool.map(self._do_one_fold, range(1, 6))
@@ -132,6 +137,7 @@ class SVD(Model):
             "cv_precision": fit.metrics['test_precision'],
             "cv_recall": fit.metrics['test_recall'],
             "cv_mae": fit.metrics['test_mae'],
-            "cv_mse": fit.metrics['test_mse']
+            "cv_mse": fit.metrics['test_mse'],
+            "cv_class_mse": fit.metrics['test_class_mse']
         }
         return cv_metrics

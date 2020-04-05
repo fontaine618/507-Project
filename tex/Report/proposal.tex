@@ -208,9 +208,9 @@ First, a simple regression scheme can be employed. In this case, we treat the ra
 Second and third, we can utilize the fact that our numerical outcome as a fixed, finite range. Indeed, since ratings take values between 1 and 5, we can force the network to produce predictions within or close to that range. In practice, this has the effect of not penalizing as much predictions that are away from the $[1,5]$ range: such predictions could be interpreted as that the model is really confident that the prediction should be at the boundary. To procede as such we consider to simply clip the predictions to the range $[0,6]$, which is commonly known as the ReLU6 transformation. Alternativley, we consider a fixed sigmoid transformed mapped to the interval $(-2,8)$ which is fairly linear for the observed values but contracts predictions far from the true range closer to possible values. The three transformations are depicted in \Cref{fig:method.models.nn.functions}.
 
 \begin{figure}[h]
-\centering
-\caption{The three transformations considered at the output node for regression in a neural network. The dashed horizontal lines represent the boundary of observed ratings. \label{fig:method.models.nn.functions}}
-\includegraphics[width=0.8\linewidth]{functions_nn}
+	\centering
+	\caption{The three transformations considered at the output node for regression in a neural network. The dashed horizontal lines represent the boundary of observed ratings. \label{fig:method.models.nn.functions}}
+	\includegraphics[width=0.8\linewidth]{functions_nn}
 \end{figure}
 
 Forth, we can treat our responses as five classes where only one is observed per example. In that case, we encode the ratings in the \textit{one-hot} fashion, that is, 4 gets encoded as $(0,0,0,1,0)$. Then, the final layer is transformed using the usual softmax function and the loss function used is the binary cross-entropy. Again, this encoding loses the ordinal nature of the ratings.
@@ -232,21 +232,29 @@ Our NN models are implemented using the \texttt{PyTorch} module \citep{paszke201
 
 %------------------------------------------------------------------------------
 \subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
-Building a recommendation system by doing matrix completion is one of "collaborative filtering" techniques. This means we will try to suggest movies to an user by inspecting the ratings of "similar" users. To be more specific, it is assumed that the taste, or the ratings, made by users follows some low-rank structure, and use that assumption to make prediction. 
+Building a recommendation system by doing matrix completion is one of "collaborative filtering" techniques. This means that we will try to suggest movies to an user by inspecting the ratings of "similar" users. To be more specific, it is assumed that the taste, or the ratings, made by users follows some low-rank structure, and use that assumption to make prediction. The idea of using SVD for movie recommendation is simple but it turns out to be successful in application. The winner in the Netflix prize competition used SVD as the main technique in their algorithm \cite{bennett2007netflix}. 
 
-Let the hyper parameters embedded dimension be $k$ and the iteration $iter\_nums$ We train the test set as follows
+%------------------------------------------------------------------------------
+\paragraph{Model description.}\label{par:method.models.svd.model}
+In this model, we use 2 hyper-parameters, which are embedded dimension $k$ and the iteration numbers $I$. We set up and train the training data as follows.
 
-1. Create a pivot matrix $A$ in which rows are users and columns are movies. The (i,j)-cell of the matrix will be the visible rating of user i for movie j, NA if there is no information about that in the train set. We also create a masked matrix which indicate which cell in pivot matrix is NA. Fill the NA cells in $A$ with '0'.
+1. Create a pivoted matrix $A$ in which rows are users and columns are movies. The $(i,j)$-cell of the matrix is the rating of user i for movie j, and is NA if there is no information about that in the training set. We also create a masked matrix which indicate which cell in pivot matrix is NA. After that, we fill the NA cells in $A$ with '0'.
 
-2. For each t in range($iter\_num$): 
-\begin{enumerate}
+2. Repeat $I$ times: 
+\begin{itemize}
 	\item Fill all the non-masked cell in $A$ with the original visible rating.
-	\item Approximate $A$ by its truncated SVD. 
-\end{enumerate}
-By iterating two steps above, it allows us to reuse the visible information over and over, and extract the low rank structure of ratings. It is proved that if the underlying structure is indeed low-rank, and the masked matrix is not too dense, then this procedure can reconstruct the original matrix. (add details)
+	\item Approximate $A$ by its truncated SVD of rank $k$. 
+\end{itemize}
+By iterating two steps above, it allows us to reuse the visible information over and over, and extract the low rank structure of ratings. 
+
+
+%------------------------------------------------------------------------------
+
 
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.svd.impl}
+We use the svds function from \texttt{scipy.sparse.linalg} module to compute truncated SVD of pivoted matrix and repeat two steps above to get the reconstruction of users-movies ratings matrix. After that, the information from the reconstructed matrix is used as predictions. This model has two turning parameters: the dimension $k$ and number of iterations $I$.  
+
 
 %------------------------------------------------------------------------------
 \subsubsection{Restricted Boltzmann Machine}\label{subsubsec:method.models.rbm}
@@ -254,6 +262,12 @@ Similar to matrix completion, Restricted Boltzmann Machine (RBM) is also a colla
 
 %------------------------------------------------------------------------------
 \paragraph{Model description.}\label{par:method.models.rbm.model}
+
+\begin{figure}
+	\input{./diagrams/rbm.tex}
+	\caption{Restricted Boltzmann Machine in \Cref{subsubsec:method.models.rbm}. Each user has a graphical model connecting hidden variables and visible ratings. Weight $W_{ij}^{k}$ shares among users.\label{fig:method.models.rbm}}
+\end{figure}
+
 
 
 Denote hidden variables by $\textbf{h} = (h_1, h_2,\dots, h_F)$ and suppose there are $K$ rating scores in total ($5$ for our data set). For now, to reduce the burden of notation, we only consider the model for each user and will talk about the connection between them later. For an user, suppose he rated $m$ movie $1, \dots, m$, and we write the visible ratings $\textbf{V} = (v_i^k)_{i,k}$ where $v_i^k = 1$ if he rates $k$ for movie $i$, and $0$ otherwise. The generative model is defined by
@@ -327,8 +341,7 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.rbm.impl}
 
-
-
+We build and train a RBM model by ourselves just using basic modules such as \texttt{numpy}. There are three turning parameters in the model: The number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation is applied from \cite{hinton2012practical}.
 
 
 %------------------------------------------------------------------------------
@@ -343,7 +356,7 @@ We first detail the results for the four models we consider, noting some observa
 %------------------------------------------------------------------------------
 \subsection{$K$-Nearest-Neighbors}\label{sebsec:results.knn}
 
-Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.\footnote{The complete logs can be found alongside the projet's code at \url{https://github.com/fontaine618/507-Project/}.} 
+Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.\footnote{The complete logs can be found alongside the project's code at \url{https://github.com/fontaine618/507-Project/}.} 
 
 As could be expected, regression aggregation performs better in terms of MSE while classification aggregation performs better in terms of prediction accuracy. Also, the value of the tuning parameters $\alpha_\text{user}$ and $\alpha_\text{tags}$ for these best models seems to align with their purpose. Indeed, we observe that the best models require to inflate the importance of user information and deflate that of tags.
 
@@ -367,16 +380,35 @@ Third, the best performing models in terms of CV metrics seem to require simpler
 
 %------------------------------------------------------------------------------
 \subsection{Matrix completion}\label{sebsec:results.svd}
+We trained around 100 instances of matrix completion model as describes in \Cref{subsubsec:method.models.svd}. We choose to present some models with its parameters. From the result, we can see some facts about turning parameters as below.
 
+For the embedded dimension $k$, if it is chosen to be too small, the model will not capture enough the complexity of the data and lead to the underfitting phenomena. If $k$ is large, the computational time will relatively increase but the prediction is not getting better, and there is even the overfitting phenomena. 
+
+For the iterative number $I$ to use SVD, it can be seen that small $I$ leads to underfitting model meanwhile large $I$ leads to overfitting model. This can be interpreted that if we reuse the training data too many times, the model will tend to prefer the training data and the test error will eventually increase. If $k$ and $I$ are large at the same time, the model will be surely overfitting.
+
+It is amazed that this model only needs a few lines of code but the performance is comparable to what the complicated models like Neural network or Restricted Boltzmann Machine do. The idea behind this method is also innocent and it is computationally efficient (most of them only take less than a second to train in a 4 cores CPU machine).     
+
+\input{./table/svd.tex}
 
 %------------------------------------------------------------------------------
 \subsection{Restricted Bolztmann Machine}\label{sebsec:results.rbm}
 
+We trained around 100 instances of RBM model as describes in \Cref{subsubsec:method.models.rbm}. We choose to present some models with its parameters. From the result, we can see some facts about turning parameters as below.
+
+For the number of hidden nodes, it turns out to be the best when set it around 15-20. If this number is too small, the model will be underfitting, but setting this number to large does not help the model to predict better.
+
+For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much. (Because we need to do sampling for every (movie, user) couple)
+
+It is claimed in the paper \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD model in the careful set-up parameters scenario. But we observe something contradict to that here. It may due to the fact that the research team in the University of Toronto has used several years to achieve the expertise in training RBM. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
+
+\input{./table/rbm.tex}
 
 %------------------------------------------------------------------------------
 \subsection{Model comparison}\label{sebsec:results.model}
 
 \Cref{tab:results.model}
+
+About k-NN and NN.... For SVD, it can be seen that this simple model can outperform many other complicated models. That can be also seen in the Netflix prize competition (2006), a guy named Simon Funk (https://sifter.org/~simon/journal/20061211.html) used this simple model and got to be in the third place. For RBM, it is a beautiful latent variable model, but really needs time and expertise to be able to set it up and train efficiently.  
 
 \input{./table/model.tex}
 
