@@ -41,15 +41,14 @@
 
 
 
-%\begin{abstract}
+\begin{abstract}
+\textbf{Abstract.} The \texttt{MovieLens} datasets contain user ratings of movies as well as movie and user information. In this preliminary report, we consider four predictive models of the ratings based on the available information: $K$-nearest-neighbors, neural networks, matrix completion using singular value decomposition and  restricted Bolztmann machine. We tune all models to finally compare them on their out-of-sample performance. All the code and results can be found at \url{https://github.com/fontaine618/507-Project/}.
+\end{abstract}
 
-%\end{abstract}
-
-\tableofcontents
-\listoftodos
 \end{frontmatter}
 
 
+\tableofcontents
 
 %------------------------------------------------------------------------------
 \section{The \texttt{MovieLens} Datasets}\label{sec:dataset}
@@ -156,7 +155,7 @@ We consider the Euclidean distance $d(\bx,\bx')=\Vert\bx-\bx'\Vert_2$ for our di
 
 First, we standardize the features to get a mean of 0 and a variance of 1 across all examples. This step is crucial for any $K$-NN model using a general distance such as the Euclidean distance since features with different scales will have a lot more weight in the total distance. For example, all of our features are between 0 and except for the user age which varies from 7 to 73 and if we do not standardize this features, the $K$-NN will only match examples of very similar ages irrespectively of the other features.
 
-Second, to account for the disproportional dimensions of the three groups of features as well as the relative importance of these groups, we introduce two parameters in the distance function. We fix the genre contribution to the distance to 1 and consider two multiplying factors $\alpha_\text{tags}, \alpha_\text{user}\geqslant 0$, respectively for tag and users. Then, we transform the standardized features by scaling the correponding groups of features:
+Second, to account for the disproportional dimensions of the three groups of features as well as the relative importance of these groups, we introduce two parameters in the distance function. We fix the genre contribution to the distance to 1 and consider two multiplying factors $\alpha_\text{tags}, \alpha_\text{user}\geqslant 0$, respectively for tags and user information. Then, we transform the standardized features by scaling the correponding groups of features:
 \begin{equation*}
 	\bx:=(\bx_\text{genres}, \bx_\text{tags}, \bx_\text{user})
 	\quad\mapsto\quad
@@ -174,7 +173,7 @@ Since our responses---the ratings---take discrete numerical values, we consider 
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.knn.impl}
 
-We implement our $K$-NN models using the \texttt{sklearn.neighbors} modules \citep{scikit-learn}: the classification predictions are made using \texttt{KNeighborsClassifier} and the regression predictions are made using \texttt{KNeighborsRegressor}. We use default settings except, obviously, for the number of neighbors. Our model has four tuning directions: aggregation method, number of neighbors and the two multiplers $\alpha_\text{tags},\alpha_\text{user}\geqslant 0$.
+We implement our $K$-NN models using the \texttt{sklearn.neighbors} module \citep{scikit-learn}: the classification predictions are made using \texttt{KNeighborsClassifier} and the regression predictions are made using \texttt{KNeighborsRegressor}. We use default settings except, obviously, for the number of neighbors. Our model has four tuning directions: aggregation method, number of neighbors and the two multiplers $\alpha_\text{tags},\alpha_\text{user}\geqslant 0$.
 
 %------------------------------------------------------------------------------
 \subsubsection{Neural Networks}\label{subsubsec:method.models.nn}
@@ -208,18 +207,12 @@ First, a simple regression scheme can be employed. In this case, we treat the ra
 Second and third, we can utilize the fact that our numerical outcome as a fixed, finite range. Indeed, since ratings take values between 1 and 5, we can force the network to produce predictions within or close to that range. In practice, this has the effect of not penalizing as much predictions that are away from the $[1,5]$ range: such predictions could be interpreted as that the model is really confident that the prediction should be at the boundary. To proceed as such we consider to simply clip the predictions to the range $[0,6]$, which is commonly known as the ReLU6 transformation. Alternatively, we consider a fixed sigmoid transformed mapped to the interval $(-2,8)$ which is fairly linear for the observed values but contracts predictions far from the true range closer to possible values. The three transformations are depicted in \Cref{fig:method.models.nn.functions}.
 
 \begin{figure}[h]
-<<<<<<< HEAD
-	\centering
-	\caption{The three transformations considered at the output node for regression in a neural network. The dashed horizontal lines represent the boundary of observed ratings. \label{fig:method.models.nn.functions}}
-	\includegraphics[width=0.8\linewidth]{functions_nn}
-=======
 \centering
 \includegraphics[width=0.8\linewidth]{functions_nn}
 \caption{The three transformations considered at the output node for regression in a neural network. The dashed horizontal lines represent the boundary of observed ratings. }\label{fig:method.models.nn.functions}
->>>>>>> ff441287f7c32e5347e3905e4d3919a233b235fe
 \end{figure}
 
-Forth, we can treat our responses as five classes where only one is observed per example. In that case, we encode the ratings in the \textit{one-hot} fashion, that is, 4 gets encoded as $(0,0,0,1,0)$. Then, the final layer is transformed using the usual softmax function and the loss function used is the binary cross-entropy. Again, this encoding loses the ordinal nature of the ratings.
+Fourth, we can treat our responses as five classes where only one is observed per example. In that case, we encode the ratings in the \textit{one-hot} fashion, that is, 4 gets encoded as $(0,0,0,1,0)$. Then, the final layer is transformed using the usual softmax function and the loss function used is the binary cross-entropy. Again, this encoding loses the ordinal nature of the ratings.
 
 Fifth, we can choose a different encoding for the five classes that will reflect ordering of ratings. Indeed, we can encode a 4 as $(1,1,1,1,0)$ and model the responses in the multi-label classification way. Then, since all encoded responses have this ordinal structure, the NN will reproduce it in its predictions. In that case, we perform a sigmoid transformation on the five final nodes before comparing them to the encoded ratings; the loss function is again the binary cross-entropy.
 
@@ -240,19 +233,21 @@ Our NN models are implemented using the \texttt{PyTorch} module \citep{paszke201
 
 %------------------------------------------------------------------------------
 \subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
-Building a recommendation system by doing matrix completion is one of "collaborative filtering" techniques. This means that we will try to suggest movies to an user by inspecting the ratings of "similar" users. To be more specific, it is assumed that the taste, or the ratings, made by users follows some low-rank structure, and use that assumption to make prediction. The idea of using SVD for movie recommendation is simple but it turns out to be successful in application. The winner in the Netflix prize competition used SVD as the main technique in their algorithm \cite{bennett2007netflix}. 
+Building a recommendation system by doing matrix completion is one of \textit{collaborative filtering} techniques. This means that we will try to suggest movies to an user by inspecting the ratings of ``similar'' users. To be more specific, it is assumed that the taste, or the ratings, made by users follows some low-rank structure, and use that assumption to make prediction. The idea of using SVD for movie recommendation is simple but it turns out to be successful in application. The winner in the Netflix prize competition used SVD as the main technique in their algorithm \citep{bennett2007netflix}. 
 
 %------------------------------------------------------------------------------
 \paragraph{Model description.}\label{par:method.models.svd.model}
-In this model, we use 2 hyper-parameters, which are embedded dimension $k$ and the iteration numbers $I$. We set up and train the training data as follows.
+In this model, we use 2 hyper-parameters, which are the embedding dimension $k$ and the number of iterations $I$. We set up and train the training data as follows.
 
-1. Create a pivoted matrix $A$ in which rows are users and columns are movies. The $(i,j)$-cell of the matrix is the rating of user i for movie j, and is NA if there is no information about that in the training set. We also create a masked matrix which indicate which cell in pivot matrix is NA. After that, we fill the NA cells in $A$ with '0'.
-
-2. Repeat $I$ times: 
+\begin{enumerate}
+\item Create a pivoted matrix $A$ in which rows are users and columns are movies. The $(i,j)$-cell of the matrix is the rating of user i for movie j, and is \texttt{NA} if there is no information about that in the training set. We also create a masked matrix which indicate which cell in pivot matrix is \texttt{NA}. After that, we fill the \texttt{NA} cells in $A$ with \texttt{0}.
+\item Repeat $I$ times: 
 \begin{itemize}
 	\item Fill all the non-masked cell in $A$ with the original visible rating.
 	\item Approximate $A$ by its truncated SVD of rank $k$. 
 \end{itemize}
+\end{enumerate}
+
 By iterating two steps above, it allows us to reuse the visible information over and over, and extract the low rank structure of ratings. 
 
 
@@ -261,32 +256,32 @@ By iterating two steps above, it allows us to reuse the visible information over
 
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.svd.impl}
-We use the svds function from \texttt{scipy.sparse.linalg} module to compute truncated SVD of pivoted matrix and repeat two steps above to get the reconstruction of users-movies ratings matrix. After that, the information from the reconstructed matrix is used as predictions. This model has two turning parameters: the dimension $k$ and number of iterations $I$.  
+We use the \texttt{svds} function from \texttt{scipy.sparse.linalg} module \citep{2020SciPy-NMeth} to compute truncated SVD of pivoted matrix and repeat the two steps above to get the reconstruction of users-movies ratings matrix. After that, the information from the reconstructed matrix is used as predictions. This model has two turning parameters: the dimension $k$ and number of iterations $I$.  
 
 
 %------------------------------------------------------------------------------
 \subsubsection{Restricted Boltzmann Machine}\label{subsubsec:method.models.rbm}
-Similar to matrix completion, Restricted Boltzmann Machine (RBM) is also a collaborative filtering method. It assumes ratings of users are affected by some latent binary variables. So that we construct a probabilistic model where there is $F$ hidden nodes in total, and a bipartite graph for each user, connecting the hidden variables with the visible ratings. 
+Similar to matrix completion, Restricted Boltzmann Machine (RBM) is also a collaborative filtering method. It assumes ratings of users are affected by some latent binary variables. We construct a probabilistic model where there is $F$ hidden nodes in total and a bipartite graph for each user connecting the hidden variables with the visible ratings. 
 
 %------------------------------------------------------------------------------
 \paragraph{Model description.}\label{par:method.models.rbm.model}
 
 \begin{figure}
 	\input{./diagrams/rbm.tex}
-	\caption{Restricted Boltzmann Machine in \Cref{subsubsec:method.models.rbm}. Each user has a graphical model connecting hidden variables and visible ratings. Weight $W_{ij}^{k}$ shares among users.\label{fig:method.models.rbm}}
+	\caption{Restricted Boltzmann Machine in \Cref{subsubsec:method.models.rbm}. Each user has a graphical model connecting hidden variables and visible ratings. Weights $W_{ij}^{k}$ are shared among users.\label{fig:method.models.rbm}}
 \end{figure}
 
 
 
-Denote hidden variables by $\textbf{h} = (h_1, h_2,\dots, h_F)$ and suppose there are $K$ rating scores in total ($5$ for our data set). For now, to reduce the burden of notation, we only consider the model for each user and will talk about the connection between them later. For an user, suppose he rated $m$ movie $1, \dots, m$, and we write the visible ratings $\textbf{V} = (v_i^k)_{i,k}$ where $v_i^k = 1$ if he rates $k$ for movie $i$, and $0$ otherwise. The generative model is defined by
+Denote hidden variables by $\textbf{h} = (h_1, h_2,\dots, h_F)$ and suppose there are $K$ rating scores in total ($5$ for our data set). For now, to reduce the burden of notation, we only consider the model for each user and will talk about the connection between them later. For a given user, suppose $m$ movies were rated and write the visible ratings $\textbf{V} = (v_i^k)_{i,k}$ where $v_i^k = 1$ if movie $m$ was rated $k$ and $0$ otherwise. The generative model is defined by
 \begin{equation}\label{GenModelRBM}
 p(\textbf{V}, \textbf{h}) = \dfrac{1}{Z} \exp(-E(\textbf{V}, \textbf{h})),
 \end{equation}
-where $Z = \sum_{\textbf{V}', \textbf{h}'}$ is the normalization. The term $E(V, h)$ is so called Energy and defined by
+where $Z = \sum_{\textbf{V}', \textbf{h}'}$ is the normalization. The term $E(V, h)$ is so called \textit{energy} and defined by
 \begin{equation}\label{EnergyRBM}
 E(V,h) = - \sum_{i=1}^{m} \sum_{j=1}^{F} \sum_{k=1}^{K} W_{ij}^k h_j v_i^k - \sum_{i=1}^{m} \sum_{k=1}^{K} b_i^k v_i^k - \sum_{j=1}^{F} h_j b_j,
 \end{equation}
-where $W_{ij}^k$ is the weight connect from $h_j$ to $v_i^k$, $b_i^k$ is bias for $v_i^k$ and $b_j$ is the bias for $h_j$. Therefore, each user has different bipartite graph model and visible ratings $\textbf{V}$, but they all share the same weight $(W_{ij}^k)$ and bias $(b_i^k), (b_j)$.   
+where $W_{ij}^k$ is the weight connecting $h_j$ to $v_i^k$, $b_i^k$ is a bias term for $v_i^k$ and $b_j$ is the bias for $h_j$. Therefore, each user has a different bipartite graph model and visible ratings $\textbf{V}$, but they all share the same weight $(W_{ij}^k)$ and biases $(b_i^k), (b_j)$.   
 
 From this, we can calculate the conditional probability 
 \begin{equation}\label{pv|h}
@@ -298,19 +293,19 @@ p(h_j = 1 | \textbf{V}) = \sigma(b_j + \sum_{i=1}^{m}\sum_{k=1}^{K} v_i^k W_{ij}
 \end{equation}
 where $\sigma$ is the sigmoid function. The marginal distribution for $\textbf{V}$ is
 $$p(\textbf{V}) = \dfrac{1}{Z} \sum_{\textbf{h'}} \exp(-E(\textbf{V}, \textbf{h'})).$$
-Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximize the marginal distribution for visible ratings $\textbf{V}$, which is known as Maximum Likelihood method. We will employ the gradient descent to find the minimizer. 
+Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximizing the marginal distribution for visible ratings $\textbf{V}$, which corresponds to the \textit{maximum likelihood} method. We will employ gradient descent to find the optimal weights. 
 
 %------------------------------------------------------------------------------
 \paragraph{Learning.}\label{par:method.models.rbm.learning}
 
-We need to compute the gradient of $\log p(\textbf{V})$ in order to perform gradient ascent. By chain's rule
+We need to compute the gradient of $\log p(\textbf{V})$ in order to perform gradient ascent. By the chain rule
 \begin{align*}
 \dfrac{\partial \log p(\textbf{V})}{\partial W_{ij}^{k}} &= \dfrac{1}{p(\textbf{V})} \dfrac{\partial p(\textbf{V})}{\partial W_{ij}^{k}} \\
 & = \dfrac{1}{p(\textbf{V})} \left(\dfrac{\sum_{\textbf{h}} \onebb_{[h_j = 1, v_{i}^{k} = 1]} p(\textbf{V}, \textbf{h})}{Z} - \dfrac{p(\textbf{V}) \sum_{\boldsymbol{\nu}, \textbf{h}}\onebb_{[h_j = 1, \boldsymbol{\nu}_{i}^{k} = 1]} p(\boldsymbol{\nu}, \textbf{h})}{Z} \right)\\
 & = \Ebb_{h|\textbf{V}}(v_i^k h_j) - \Ebb(\nu_i^k h_j)\\
 & =: \cexp{v_i^k h_j}_{data} - \cexp{\nu_i^k h_j}_{model}
 \end{align*}
-where $\cexp{\cdot}_{subscript}$ can be understand as conditional expectation with respect to the subscript. 
+where $\cexp{\cdot}_{subscript}$ denotes the conditional expectation with respect to the subscript. 
 Similarly, we have
 \begin{equation}
 \dfrac{\partial p(\textbf{V})}{\partial b_j}  = \Ebb_{h|\textbf{V}} (h_j) - \Ebb(h_j) =  \cexp{h_j}_{data} - \cexp{h_j}_{model},
@@ -319,25 +314,25 @@ and
 \begin{equation}
 \dfrac{\partial p(\textbf{V})}{\partial b_i^k}  = v_i^k - \Ebb(\nu_i^k) = v_i^k - \cexp{\nu_i^k}_{model}.
 \end{equation}
-In each equation, it is well-known to call the first term "positive statistics" and second term "negative statistics". So we have the analytical representation of gradient of weights and biased terms. In every equation, the first term is easy to compute thanks to \eqref{ph|v}. However, computing the terms $\cexp{\nu_{i}^{k}}_{model}, \cexp{h_j}_{model}$, and $\cexp{\nu_{i}^{k}}_{model}$ requires to take the sum over all value of $\boldsymbol{\nu}, \textbf{h}$, which takes exponential time and makes the algorithm inefficiently. We will instead use the Contrastive Divergence (CD) (Hinton, 2002): Approximating the $\cexp{\nu_i^k h_j}_{model}$ with $\cexp{\nu_i^k h_j}_{recon}$, which  is the approximated construction of $\cexp{\nu_i^k h_j}_{model}$ by using an idea similar to Gibbs' sampler.
+In each equation, it is customary to call the first term \textit{positive statistics} and second term \textit{negative statistics}. Hence, we have the analytical representation of gradient of weights and biased terms. In every equation, the first term is easy to compute thanks to \eqref{ph|v}. However, computing the terms $\cexp{\nu_{i}^{k}}_{model}, \cexp{h_j}_{model}$, and $\cexp{\nu_{i}^{k}}_{model}$ requires to take the sum over all value of $\boldsymbol{\nu}, \textbf{h}$, which takes exponential time and makes the algorithm inefficiently. We will instead use the \textit{Contrastive Divergence} (CD) method \citep{hinton2012practical} which consists of approximating $\cexp{\nu_i^k h_j}_{model}$ with $\cexp{\nu_i^k h_j}_{recon}$, an approximated reconstruction of $\cexp{\nu_i^k h_j}_{model}$ based on an idea similar to the Gibbs' sampler.
 
 %------------------------------------------------------------------------------
 \paragraph{Computing gradient using Constrastive Divergence.}\label{par:method.models.rbm.grad}
 
-The idea behind Contrastive Divergence (Hilton 2002) is to approximate gradient by difference of two Kullback-Leibler divergences, but ignores one trickly term (add details). Although this is a crude approximation, it turns out to work really well in many applications. The Constrastive Divergence with $n$ steps ($CD_n$) can be interpreted as follows. Given the visible ratings $\textbf{V}$, first we sample binary value for hidden units $h_{data} = h$ by equation \eqref{ph|v}. Then we do $n$ steps of Gibbs sampling, each contains two smaller steps
+The idea behind Contrastive Divergence \citep{hinton2012practical} is to approximate the gradient using the difference of two Kullback-Leibler divergences and ignore one trickly term. Although this is a crude approximation, it turns out to work really well in many applications. The Constrastive Divergence with $n$ steps ($CD_n$) can be interpreted as follows. Given the visible ratings $\textbf{V}$, first we sample binary value for hidden units $h_{data} = h$ by equation \eqref{ph|v}. Then we do $n$ steps of Gibbs' sampling, each contains two intermediary steps
 \begin{enumerate}
 	\item Sample $\boldsymbol{\nu} \leftarrow \boldsymbol{h}$ based on equation \eqref{pv|h}.
 	\item Sample $\boldsymbol{h} \leftarrow \boldsymbol{\nu}$ based on equation \eqref{ph|v}.
 \end{enumerate}
-To derive the positive statistics, we use the value of data $\textbf{V}$ and $h_{data}$. Although we can calculate it analytically using \eqref{ph|v}, but using the sample values can reduce the noise when we take the difference with the negative statistics. Hence we have
+To derive the positive statistics, we use the value of data $\textbf{V}$ and $h_{data}$. Although we can calculate it analytically using \eqref{ph|v}, using the sample values can reduce the noise when we take the difference with the negative statistics. Hence, we have
 $$\cexp{v_i^k h_j}_{data} \leftarrow v_i^k h_{data, j}, \quad \cexp{h_j}_{data} \leftarrow h_{data, j}$$
-When collect the negative statistics, it is advised in Hilton that in the last step, we should only collect $\boldsymbol{h}$ as the probability $p(\textbf{h}|\boldsymbol{\nu})$ (but not sample from it), and have     
+When collect the negative statistics, it is advised in \cite{hinton2012practical} that in the last step, we should only collect $\boldsymbol{h}$ as the probability $p(\textbf{h}|\boldsymbol{\nu})$ (but not sample from it) to get the updates
 $$\cexp{\nu_i^k h_j}_{recon} \leftarrow \nu_i^k h_{j},\quad \cexp{h_j}_{recon} \leftarrow h_{data, j},\quad \cexp{\nu_i^k}_{recon} \leftarrow \nu_i^k.$$
 
 %------------------------------------------------------------------------------
 \paragraph{Making predictions.}\label{par:method.models.rbm.pred}
 
-Knowing a set of visible unit $\textbf{V}$, we can predict rating for a new movie by using Bayes' rule and marginalize $\textbf{h}$
+Given a set of visible unit $\textbf{V}$, we can predict the rating for a new movie by using Bayes' rule and marginalization of $\textbf{h}$:
 \begin{align*}
 p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 &  \propto \sum_{\textbf{h}} p(v_q^{k} = 1, \textbf{V}, \textbf{h})\\
@@ -349,7 +344,7 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.rbm.impl}
 
-We build and train a RBM model by ourselves just using basic modules such as \texttt{numpy}. There are three turning parameters in the model: The number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation is applied from \cite{hinton2012practical}.
+We build and train a RBM model by ourselves using basic modules such as \texttt{numpy} \citep{numpy2011}. There are three turning parameters in the model: the number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation is taken from \cite{hinton2012practical}.
 
 
 %------------------------------------------------------------------------------
@@ -364,9 +359,11 @@ We first detail the results for the four models we consider, noting some observa
 %------------------------------------------------------------------------------
 \subsection{$K$-Nearest-Neighbors}\label{sebsec:results.knn}
 
-Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.\footnote{The complete logs can be found alongside the project's code at \url{https://github.com/fontaine618/507-Project/}.} 
+Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.
 
 As could be expected, regression aggregation performs better in terms of MSE while classification aggregation performs better in terms of prediction accuracy. Also, the value of the tuning parameters $\alpha_\text{user}$ and $\alpha_\text{tags}$ for these best models seems to align with their purpose. Indeed, we observe that the best models require to inflate the importance of user information and deflate that of tags.
+
+The  $K$-NN models is particularly inefficient computationally: when $K$ increases from 5 to 100, training time increases from minutes to hours.
 
 \input{./table/knn.tex}
 
@@ -382,45 +379,59 @@ Second, we note that the ordinal transformation does not appear in the best resu
 
 Third, the best performing models in terms of CV metrics seem to require simpler hidden layers structures: while the experiments included networks with up to four hidden layers, the best models generally contain only two. This exhibits the benefit of using CV for model selection as it prevents overfitting.
 
+In terms of computing time, the NN models we consider train for 50 epochs in around 1 minute on GPU.
+
 
 \input{./table/nn_features.tex}
 
 
 %------------------------------------------------------------------------------
 \subsection{Matrix completion}\label{sebsec:results.svd}
-We trained around 100 instances of matrix completion model as describes in \Cref{subsubsec:method.models.svd}. We choose to present some models with its parameters. From the result, we can see some facts about turning parameters as below.
+We trained around 100 instances of matrix completion models described in \Cref{subsubsec:method.models.svd}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.svd}, we can see some facts about turning parameters as below.
 
 For the embedded dimension $k$, if it is chosen to be too small, the model will not capture enough the complexity of the data and lead to the underfitting phenomena. If $k$ is large, the computational time will relatively increase but the prediction is not getting better, and there is even the overfitting phenomena. 
 
 For the iterative number $I$ to use SVD, it can be seen that small $I$ leads to underfitting model meanwhile large $I$ leads to overfitting model. This can be interpreted that if we reuse the training data too many times, the model will tend to prefer the training data and the test error will eventually increase. If $k$ and $I$ are large at the same time, the model will be surely overfitting.
 
-It is amazed that this model only needs a few lines of code but the performance is comparable to what the complicated models like Neural network or Restricted Boltzmann Machine do. The idea behind this method is also innocent and it is computationally efficient (most of them only take less than a second to train in a 4 cores CPU machine).     
+It is amazing that this model only needs a few lines of code but the performance is comparable to what the complicated models like Neural network or Restricted Boltzmann Machine do. The idea behind this method is also innocent and it is computationally efficient (most of them only take less than a second to train in a 4 cores CPU machine).     
 
 \input{./table/svd.tex}
 
 %------------------------------------------------------------------------------
 \subsection{Restricted Bolztmann Machine}\label{sebsec:results.rbm}
 
-We trained around 100 instances of RBM model as describes in \Cref{subsubsec:method.models.rbm}. We choose to present some models with its parameters. From the result, we can see some facts about turning parameters as below.
+We trained around 100 instances of RBM model as describes in \Cref{subsubsec:method.models.rbm}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.rbm}, we can see some facts about turning parameters as below.
 
 For the number of hidden nodes, it turns out to be the best when set it around 15-20. If this number is too small, the model will be underfitting, but setting this number to large does not help the model to predict better.
 
-For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much. (Because we need to do sampling for every (movie, user) couple)
+For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much (we need to do sampling for every (movie, user) couple.)
 
-It is claimed in the paper \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD model in the careful set-up parameters scenario. But we observe something contradict to that here. It may due to the fact that the research team in the University of Toronto has used several years to achieve the expertise in training RBM. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
+It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
 
 \input{./table/rbm.tex}
 
 %------------------------------------------------------------------------------
 \subsection{Model comparison}\label{sebsec:results.model}
 
-\Cref{tab:results.model}
+\Cref{tab:results.model} contains a comparison of the best version of each of the four models we consider in terms of both regression and classification metrics. Overall, matrix completion using SVD systematically out-performs all other models in MSE and classification accuracy.
 
-About k-NN and NN.... For SVD, it can be seen that this simple model can outperform many other complicated models. That can be also seen in the Netflix prize competition (2006), a guy named Simon Funk (https://sifter.org/~simon/journal/20061211.html) used this simple model and got to be in the third place. For RBM, it is a beautiful latent variable model, but really needs time and expertise to be able to set it up and train efficiently.  
+The $K$-NN models perform worse than $NN$ and matrix completion and require much more computing time. This approach does not seem very promising as a predictive model for movie ratings.
+
+The $NN$ models yield interesting results and can be trained efficiently, but they do not achieve the performance level of matrix completion even though more information is included in the model. Indeed, matrix completion does not use movie genre and tags nor user details.
+
+The SVD matrix completion model, it can be seen that this simple model can outperform many other complicated models. Simon Funk, a participant in the Netflix prize competition \citep{bennett2007netflix}, used this simple model and finished in third place.\footnote{\url{https://sifter.org/~simon/journal/20061211.html}} Its computational efficiency, compared to all three other models, is also a very appealing feature.
+
+The RBM model, while a beautiful latent variable model, really needs time and expertise to be able to set it up correctly and implemenent efficiently.  
 
 \input{./table/model.tex}
 
 %------------------------------------------------------------------------------
+\section{Final report}\label{sec:final}
+
+For the final report, we will use results from the above model comparison in order to select a final model. Then, we will proceed to an exploratory data analysis using that model in order to extract insight about ratings with respect to user and movie information.
+
+%------------------------------------------------------------------------------
+\newpage
 \bibliographystyle{imsart-nameyear}
 \bibliography{../utils/references}{}
 
