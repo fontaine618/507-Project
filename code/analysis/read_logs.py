@@ -34,6 +34,8 @@ def read_logs(metrics: pd.DataFrame):
         df = df.append(metrics.iloc[m].append(pd.Series(d)), ignore_index=True)
     return df
 
+metrics = pd.read_table("models/log/svd.tsv", index_col="description")
+
 # NN
 metrics = pd.read_table("models/log/nn.tsv", index_col="description")
 df = read_logs(metrics)
