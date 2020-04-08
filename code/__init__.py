@@ -114,9 +114,9 @@ import pandas as pd
 pd.options.mode.chained_assignment = None
 train, test = data.load_train_test_ratings()
 
-for num_hidden_nodes in [15]:
-    for Gibbs_iters in [5]:
-        for max_iters in [1]:
+for num_hidden_nodes in [15, 20, 30]:
+    for Gibbs_iters in [1, 5]:
+        for max_iters in [1, 5, 10, 20]:
             for learning_rate in [0.1, 1]:
                 #train, test = data.load_train_test_ratings()
                 rbm = models.RBM(num_hidden_nodes=num_hidden_nodes, max_iters=max_iters, learning_rate=learning_rate, Gibbs_iters=Gibbs_iters)
@@ -125,7 +125,6 @@ for num_hidden_nodes in [15]:
                 rbm.cv()
                 rbm.test(test)
                 rbm.log()
-
 
 
 
