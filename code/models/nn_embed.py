@@ -121,6 +121,8 @@ class NNEmbed(Model):
             self.options["n_users"] = 943 + 1
         if "n_movies" not in self.options:
             self.options["n_movies"] = 1681 + 1
+        if "weight_decay" not in self.options:
+            self.options["weight_decay"] = None
         if "layers" not in self.options:
             self.options["layers"] = [(1000, "relu"), (100, "relu")]
 
@@ -146,7 +148,11 @@ class NNEmbed(Model):
             use_features=self.options["use_features"]
         )
         self.model = model.to(self.options["device"])
-        self.optimizer = torch.optim.SGD(model.parameters(), lr=self.options["lr"])
+        self.optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=self.options["lr"],
+            weight_decay=self.options["weight_decay"]
+        )
 
     def _compute_epoch_loss(self, data_loader):
         DEVICE = self.options["device"]

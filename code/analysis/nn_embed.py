@@ -1,8 +1,34 @@
 import data
 import models
 import pandas as pd
+import numpy as np
 
 train, test, features = data.load_train_test_and_feature_list()
+
+for w in [*np.logspace(-6, -2, num=6)]:
+    for layers in [
+        [(512, "relu"), (64, "relu")],
+        [(1024, "relu"), (64, "relu")],
+        [(1024, "relu"), (128, "relu")],
+        [(1024, "relu"), (256, "relu"), (64, "relu")],
+    ]:
+        for n_embed_users in [32, 64, 128]:
+            for n_embed_movies in [64, 128, 256]:
+                nn = models.NNEmbed(
+                    type="RegressorRelu6",
+                    layers=layers,
+                    n_embed_users=n_embed_users,
+                    n_embed_movies=n_embed_movies,
+                    use_features=True,
+                    weight_decay=w
+                )
+                nn.add_train_data(train, "rating", features)
+                nn.train()
+                nn.cv()
+                nn.test(test)
+                nn.log()
+
+
 
 # Train NN
 for type in ["Regressor", "RegressorRelu6", "RegressorSigmoid", "Ordinal", "Classifier"]:
@@ -26,7 +52,6 @@ for type in ["Regressor", "RegressorRelu6", "RegressorSigmoid", "Ordinal", "Clas
                 nn.cv()
                 nn.test(test)
                 nn.log()
-
 
 pd.set_option('display.max_rows', 200)
 pd.set_option('display.max_columns', 20)

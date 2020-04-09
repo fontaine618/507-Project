@@ -21,7 +21,7 @@ def load_movies():
 		header=None,
 		names=[
 			"movie_id", "movie_title", "release_date", "video_release_date",
-			"IMDb URL", "genre_unknown", "genre_Action", "genre_Adventure", "genre_Animation",
+			"IMDb URL", "genre_Unknown", "genre_Action", "genre_Adventure", "genre_Animation",
 			"genre_Children's", "genre_Comedy", "genre_Crime", "genre_Documentary", "genre_Drama", "genre_Fantasy",
 			"genre_Film-Noir", "genre_Horror", "genre_Musical", "genre_Mystery", "genre_Romance", "genre_Sci-Fi",
 			"genre_Thriller", "genre_War", "genre_Western"
