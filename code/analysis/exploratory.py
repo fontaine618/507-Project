@@ -19,6 +19,7 @@ svd.add_train_data(whole, "rating", ["user_id", "movie_id"])
 svd.train()
 
 pred_df = svd.pred_df.clip(1, 5)
+pred_df = (pred_df.transpose() - pred_df.mean(axis=1)).transpose()
 pred_df["user_id"] = pred_df.index
 pred = pd.melt(pred_df, id_vars="user_id", value_name="pred_rating")
 
@@ -52,24 +53,51 @@ X = np.concatenate([
     ratings["age"].to_numpy().reshape((-1, 1)),
     encoder.fit_transform(ratings["genre"]).reshape((-1, 1)),
     # encoder.fit_transform(ratings["gender"]).reshape((-1, 1))
-], axis=1)
+], axis=1).astype(int)
 y = ratings["pred_rating"].to_numpy()
 
-gam = LinearGAM(
-    te(0, 1, n_splines=5, dtype=["numerical", "categorical"])
-)
-gam.fit(X, y)
-gam.summary()
 
-for i, term in enumerate(gam.terms):
-    if term.isintercept:
-        continue
+encoder = LabelEncoder()
+plt.style.use("seaborn")
 
-    XX = gam.generate_X_grid(term=i)
-    pdep, confi = gam.partial_dependence(term=i, X=XX, width=0.95)
 
-    plt.figure()
-    plt.plot(XX[:, term.feature], pdep)
-    plt.plot(XX[:, term.feature], confi, c='r', ls='--')
-    plt.title(repr(term))
-    plt.show()
+fig, axs = plt.subplots(3, 3, constrained_layout=True, sharex=True, sharey=False)
+for genre, ax in zip(ratings["genre"].unique(), axs.flat):
+    df = ratings[ratings["genre"] == genre]
+    X = np.concatenate([
+        df["age"].to_numpy().reshape((-1, 1)),
+        encoder.fit_transform(df["gender"]).reshape((-1, 1))
+    ], axis=1).astype(int)
+    y = df["pred_rating"].to_numpy()
+    gam = LinearGAM(
+        te(0, 1, n_splines=5, dtype=["numerical", "categorical"]),
+        fit_intercept=False
+    )
+    gam.fit(X, y)
+    term = gam.terms[0]
+
+
+
+    XXF = np.concatenate(
+        [np.arange(7, 74).reshape((-1, 1)), np.ones((67, 1))],
+        axis=1
+    ).astype(int)
+    pdep, confi = gam.partial_dependence(term=0, X=XXF, width=0.95)
+    ax.plot(XXF[:, 0], pdep, c="r", label="Female")
+    ax.plot(XXF[:, 0], confi, c='r', ls='--', alpha=0.2)
+
+    XXM = np.concatenate(
+        [np.arange(7, 74).reshape((-1, 1)), np.zeros((67, 1))],
+        axis=1
+    ).astype(int)
+    pdep, confi = gam.partial_dependence(term=0, X=XXM, width=0.95)
+    ax.plot(XXM[:, 0], pdep, c="b", label="Male")
+    ax.plot(XXM[:, 0], confi, c='b', ls='--', alpha=0.2)
+
+    ax.hlines(0, xmin=7, xmax=73)
+
+    ax.set_title(genre)
+
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), ncol=1,
+            borderaxespad=0, frameon=False, title="Gender")
+plt.show()

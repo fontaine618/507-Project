@@ -36,7 +36,9 @@ class SVD(Model):
             ## project onto low-rank matrices sub-space
             U, sigma, Vt = svds(pred_matrix, k=self.options['embed_dim'])
             pred_matrix = U @ np.diag(sigma) @ Vt
-
+        self.U = U
+        self.Vt = Vt
+        self.sigma = sigma
         self.pred_df = pd.DataFrame(pred_matrix, index=train_df.index, columns=train_df.columns)
 
     def train(self):
