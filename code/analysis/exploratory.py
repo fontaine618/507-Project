@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pygam import LinearGAM, s, l, f, te
 from sklearn.preprocessing import LabelEncoder
+plt.style.use("seaborn")
 
 pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 20)
@@ -37,7 +38,10 @@ users.drop(columns="zip_code", inplace=True)
 users["age_binned"] = pd.cut(users["age"], bins=[5, 20, 35, 50, 75])
 users["age_binned"].value_counts()
 
-ratings = pred.merge(movies, how="left", on="movie_id", right_index=True)
+# depending on the case we want left or right join here
+# ratings = pred.merge(movies, how="left", on="movie_id", right_index=True)
+ratings = pred.merge(movies, how="right", on="movie_id", right_index=True)
+
 ratings = ratings.merge(users, how="left", on="user_id", right_index=True)
 ratings.dropna(0, inplace=True)
 
@@ -49,20 +53,10 @@ out = avg_rating.pivot_table(
 ).round(2)
 
 encoder = LabelEncoder()
-X = np.concatenate([
-    ratings["age"].to_numpy().reshape((-1, 1)),
-    encoder.fit_transform(ratings["genre"]).reshape((-1, 1)),
-    # encoder.fit_transform(ratings["gender"]).reshape((-1, 1))
-], axis=1).astype(int)
-y = ratings["pred_rating"].to_numpy()
 
 
-encoder = LabelEncoder()
-plt.style.use("seaborn")
-
-
-fig, axs = plt.subplots(3, 3, constrained_layout=True, sharex=True, sharey=False)
-for genre, ax in zip(ratings["genre"].unique(), axs.flat):
+fig, axs = plt.subplots(6, 3, sharex=True, sharey=True, figsize=(8, 10))
+for genre, ax in zip(sorted(ratings["genre"].unique()), axs.flat):
     df = ratings[ratings["genre"] == genre]
     X = np.concatenate([
         df["age"].to_numpy().reshape((-1, 1)),
@@ -71,7 +65,7 @@ for genre, ax in zip(ratings["genre"].unique(), axs.flat):
     y = df["pred_rating"].to_numpy()
     gam = LinearGAM(
         te(0, 1, n_splines=5, dtype=["numerical", "categorical"]),
-        fit_intercept=False
+        fit_intercept=True
     )
     gam.fit(X, y)
     term = gam.terms[0]
@@ -96,8 +90,18 @@ for genre, ax in zip(ratings["genre"].unique(), axs.flat):
 
     ax.hlines(0, xmin=7, xmax=73)
 
-    ax.set_title(genre)
+    ax.set_title(genre, fontsize=10)
+plt.setp(axs[-1, :], xlabel='Age')
+plt.setp(axs[:, 0], ylabel='Rating difference')
 
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), ncol=1,
             borderaxespad=0, frameon=False, title="Gender")
+fig.suptitle("Movie genre rating difference per user age and gender",
+             fontsize=14, x=0.025, y=0.99,
+             horizontalalignment='left', verticalalignment='top')
+fig.tight_layout()
+fig.subplots_adjust(top=0.92)
+
+plt.savefig("../tex/Report/fig/rating_diff_per_age_gender_genre.pdf")
+
 plt.show()
