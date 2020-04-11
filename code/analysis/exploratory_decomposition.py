@@ -168,6 +168,9 @@ x = np.arange(7, 73, 0.1)
 fig, axs = plt.subplots(2, 1, sharex=True)
 for i, gender in enumerate(["M", "F"]):
     ax = axs[i]
+    dat = users["age"][users["gender"] == gender]
+    density = stats.kde.gaussian_kde(dat)
+    ax.plot(x, density(x), label="All", color="black", linestyle="--", alpha=0.5)
     for k in range(cluster_users.n_clusters):
         dat = users["age"][(users["gender"] == gender) & (pred_users["cluster"] == k)]
         density = stats.kde.gaussian_kde(dat)
