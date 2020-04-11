@@ -5,15 +5,15 @@ import numpy as np
 
 train, test, features = data.load_train_test_and_feature_list()
 
-for w in [*np.logspace(-6, -2, num=6)]:
+for w in [*np.logspace(-6, -2, num=6)][2:]:
     for layers in [
         [(512, "relu"), (64, "relu")],
         [(1024, "relu"), (64, "relu")],
         [(1024, "relu"), (128, "relu")],
         [(1024, "relu"), (256, "relu"), (64, "relu")],
     ]:
-        for n_embed_users in [32, 64, 128]:
-            for n_embed_movies in [64, 128, 256]:
+        for n_embed_users in [32, 64]:
+            for n_embed_movies in [64, 128]:
                 nn = models.NNEmbed(
                     type="RegressorRelu6",
                     layers=layers,
