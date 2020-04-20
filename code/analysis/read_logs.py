@@ -63,7 +63,13 @@ table.to_latex(
     label="tab:results.nn"
 )
 
-
+df = df_features[df_features.index.get_level_values(0) == False]
+bests = df[(df["cv_mse"] < 1.05) | (df["cv_accuracy"] > 0.36)]
+# bests.index = bests.index.droplevel()
+table = bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+table.sort_values(by="cv_accuracy", inplace=True, ascending=False)
+table = table.applymap("{0:.4f}".format)
+print(table.to_latex())
 
 # KNN
 # metrics = pd.read_table("models/log/knn.tsv", index_col="description")
