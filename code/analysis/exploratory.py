@@ -55,8 +55,8 @@ out = avg_rating.pivot_table(
 encoder = LabelEncoder()
 
 
-fig, axs = plt.subplots(6, 3, sharex=True, sharey=True, figsize=(8, 10))
-for genre, ax in zip(sorted(ratings["genre"].unique()), axs.flat):
+fig, axs = plt.subplots(3, 3, sharex=True, sharey=True, figsize=(6, 6))
+for genre, ax in zip(sorted(ratings["genre"].unique())[:9], axs.flat):
     df = ratings[ratings["genre"] == genre]
     X = np.concatenate([
         df["age"].to_numpy().reshape((-1, 1)),
@@ -102,6 +102,6 @@ fig.suptitle("Movie genre rating difference per user age and gender",
 fig.tight_layout()
 fig.subplots_adjust(top=0.92)
 
-plt.savefig("../tex/Report/fig/rating_diff_per_age_gender_genre.pdf")
+plt.savefig("../tex/Report/fig/rating_diff_per_age_gender_genre_9.pdf")
 
 plt.show()
