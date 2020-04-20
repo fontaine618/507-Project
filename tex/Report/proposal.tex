@@ -1,6 +1,7 @@
 \documentclass[bj, preprint]{imsart}
 \RequirePackage[OT1]{fontenc}
 \RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+
 \usepackage{amsthm,amsmath,natbib,booktabs,cleveref}
 \newcommand{\cexp}[1]{\left<#1\right>}
 \usepackage{bbm}
@@ -16,7 +17,7 @@
 
 \begin{frontmatter}
 
-\title{{\Large STATS 507 Project Preliminary Report:} \\ 
+\title{{\Large STATS 507 Project Report:} \\ 
 \bf \texttt{MovieLens} Datasets---Predicting and Analyzing User Ratings of Movies}
 \runtitle{\texttt{MovieLens}---Predicting and Analyzing Movie Ratings}
 
@@ -39,10 +40,10 @@
 \affiliation{University of Michigan, Department of Statistics}
 \end{aug}
 
-
+\vspace{2cm}
 
 \begin{abstract}
-\textbf{Abstract.} The \texttt{MovieLens} datasets contain user ratings of movies as well as movie and user information. In this preliminary report, we consider four predictive models of the ratings based on the available information: $K$-nearest-neighbors, neural networks, matrix completion using singular value decomposition and  restricted Bolztmann machine. We tune all models to finally compare them on their out-of-sample performance. All the code and results can be found at \url{https://github.com/fontaine618/507-Project/}.
+\textbf{Summary.} The \texttt{MovieLens} datasets contain user ratings of movies as well as movie and user information. In this report, we consider four predictive models of the ratings based on the available information: $K$-nearest-neighbors, neural networks, matrix completion using singular value decomposition and  restricted Bolztmann machine. We tune all models to finally compare them on their out-of-sample performance: matrix completion produces the best testing metrics. Then, we propose two exploratory analysis methods in order to extract insight from the selected predictive model. All code and results can be found at \url{https://github.com/fontaine618/507-Project/}.
 \end{abstract}
 
 \end{frontmatter}
@@ -121,7 +122,7 @@ In total, we were able to match \num{1558} out of the \num{1681} in the \texttt{
 We therefore dropped all ratings of the movies which we could not matched. Fortunately, only very marginal movies did not make the cut and only \num{588} ratings out of \num{100000} had to be dropped: the resulting dataset therefore is composed of \num{99412} ratings on \num{1558} movies by \num{943} users. 
 
 %------------------------------------------------------------------------------
-\subsubsection{Data subsetting}\label{subsubsec:method.preprocess.subset}
+\subsubsection{Data Subsetting}\label{subsubsec:method.preprocess.subset}
 
 Upon joining the different datasets, we further subset the data in order to insure adequate representation of all included movies. 
 In particular, we identify that some movies have small frequency (some appearing only once, for example). 
@@ -221,14 +222,19 @@ Fourth, we can treat our responses as five classes where only one is observed pe
 Fifth, we can choose a different encoding for the five classes that will reflect ordering of ratings. Indeed, we can encode a 4 as $(1,1,1,1,0)$ and model the responses in the multi-label classification way. Then, since all encoded responses have this ordinal structure, the NN will reproduce it in its predictions. In that case, we perform a sigmoid transformation on the five final nodes before comparing them to the encoded ratings; the loss function is again the binary cross-entropy.
 
 
-
-\simon{move diagram to appendix}
 \begin{figure}
 \centering
-\input{./diagrams/nn.tex}
-\caption{Neural network architecture described in \Cref{subsubsec:method.models.nn}. Black nodes represent observed quantities; white nodes, hidden variables; grey squares, functions.}
-\label{fig:method.models.nn}
+	\includegraphics[scale=0.7]{nn}
+	\caption{Neural network architecture.}
+	\label{fig:method.models.nn}
 \end{figure}
+
+%\begin{figure}
+%\centering
+%\input{./diagrams/nn.tex}
+%\caption{Neural network architecture described in \Cref{subsubsec:method.models.nn}. Black nodes represent observed quantities; white nodes, hidden variables; grey squares, functions.}
+%\label{fig:method.models.nn}
+%\end{figure}
 
 %------------------------------------------------------------------------------
 \paragraph{Implementation details.}\label{par:method.models.nn.impl}
@@ -236,7 +242,7 @@ Fifth, we can choose a different encoding for the five classes that will reflect
 Our NN models are implemented using the \texttt{PyTorch} module \citep{paszke2017automatic} using stochastic gradient descent. We use a fixed learning rate of \num{0.01}, batch size of \num{512} and number of epochs of \num{50}; the activation functions are chosen to be the ReLU function in all cases to reduce the tuning space. For this model, we have six tuning directions: movie and user embedding sizes, hidden layers number and sizes, the final transformation and weight decay parameter value. We also compare whether including the external information improves on simply using the two embeddings.
 
 %------------------------------------------------------------------------------
-\subsubsection{Matrix completion}\label{subsubsec:method.models.svd}
+\subsubsection{Matrix Completion}\label{subsubsec:method.models.svd}
 Building a recommendation system by doing matrix completion is one of \textit{collaborative filtering} techniques. This means that we will try to suggest movies to an user by inspecting the ratings of ``similar'' users. To be more specific, it is assumed that the taste, or the ratings, made by users follows some low-rank structure, and use that assumption to make prediction. The idea of using SVD for movie recommendation is simple but it turns out to be successful in application. The winner in the Netflix prize competition used SVD as the main technique in their algorithm \citep{bennett2007netflix}. 
 
 %------------------------------------------------------------------------------
@@ -299,6 +305,175 @@ where $\sigma$ is the sigmoid function. The marginal distribution for $\textbf{V
 $$p(\textbf{V}) = \dfrac{1}{Z} \sum_{\textbf{h'}} \exp(-E(\textbf{V}, \textbf{h'})).$$
 Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximizing the marginal distribution for visible ratings $\textbf{V}$, which corresponds to the \textit{maximum likelihood} method. We will employ gradient descent to find the optimal weights. 
 
+
+%------------------------------------------------------------------------------
+\paragraph{Implementation details.}\label{par:method.models.rbm.impl}
+
+We build and train a RBM model by ourselves using basic modules such as \texttt{numpy} \citep{numpy2011}. There are three turning parameters in the model: the number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation is taken from \cite{hinton2012practical}.
+
+
+%------------------------------------------------------------------------------
+\section{Results}\label{sec:results}
+
+We perform 5-fold cross-validation on many instances of our models against the training set and produce the \textit{mean squared error} (MSE) and prediction accuracy averaged over the 5 folds. For models with numerical predictions, we assign the predicted rating to the nearest integer in the range $[1,5]$.  Models with class predictions simply use the class label as their numerical prediction. 
+
+It is worthwhile to mention that we are in a classification problem with 5 classes so a random assignment would produce 20\% accuracy: we observe accuracies close to 40\%, which is already a great improvement. To get a sense of ``good'' MSE values, we report that the winners of the Netflix prize \citep{bennett2007netflix} have a test score of \num{0.8567} on a similarly structured dataset.
+
+We first detail the results for the four models we consider, noting some observation on their CV performance. Then, we proceed to a comparison of the four models in terms of CV and testing.
+
+%------------------------------------------------------------------------------
+\subsection{$K$-Nearest-Neighbors}\label{sebsec:results.knn}
+
+Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.
+
+As could be expected, regression aggregation performs better in terms of MSE while classification aggregation performs better in terms of prediction accuracy. Also, the value of the tuning parameters $\alpha_\text{user}$ and $\alpha_\text{tags}$ for these best models seems to align with their purpose. Indeed, we observe that the best models require to inflate the importance of user information and deflate that of tags.
+
+The  $K$-NN models is particularly inefficient computationally: when $K$ increases from 5 to 100, training time increases from minutes to hours.
+
+
+%------------------------------------------------------------------------------
+\subsection{Neural Network}\label{sebsec:results.nn}
+
+We trained hundreds of instances of the NN approach described in \Cref{subsubsec:method.models.nn}; the results for a selection of the best models can be found in \Cref{tab:results.nn}. We make some observations with regards to the tuning parameters.
+
+First, we observe that including the external features (genre, tags, user info) greatly improves the model as we see a significant reduction in MSE prediction accuracy. 
+
+Second, we note that the ordinal transformation does not appear in the best results: inspecting the complete logs, we find that this method performs better than classification in terms of MSE but worse in terms of prediction and is therefore in the middle of the pack in both categories. The classification scheme yields decent prediction performance, but we see even better accuracy from regression approaches. The three regression transformation---identity, ReLU6 and sigmoid---seem to perform rather similarly with the sigmoid transform being slightly worse generally.
+
+Third, the best performing models in terms of CV metrics seem to require simpler hidden layers structures: while the experiments included networks with up to four hidden layers, the best models generally contain only two. This exhibits the benefit of using CV for model selection as it prevents overfitting. Similarly, the best models generally require some regularization---through weight decay---in order to exhibit good generalization metrics.
+
+In terms of computing time, the NN models we consider train for 50 epochs in around 1 minute on GPU.
+
+
+
+
+%------------------------------------------------------------------------------
+\subsection{Matrix Completion}\label{sebsec:results.svd}
+We trained around 100 instances of matrix completion models described in \Cref{subsubsec:method.models.svd}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.svd}, we can see some facts about turning parameters as below.
+
+For the embedded dimension $k$, if it is chosen to be too small, the model will not capture enough the complexity of the data and lead to the underfitting phenomena. If $k$ is large, the computational time will relatively increase but the prediction is not getting better, and there is even the overfitting phenomena. 
+
+For the iterative number $I$ to use SVD, it can be seen that small $I$ leads to underfitting model meanwhile large $I$ leads to overfitting model. This can be interpreted that if we reuse the training data too many times, the model will tend to prefer the training data and the test error will eventually increase. If $k$ and $I$ are large at the same time, the model will be surely overfitting.
+
+It is amazing that this model only needs a few lines of code but the performance is comparable to what the complicated models like Neural network or Restricted Boltzmann Machine do. The idea behind this method is also innocent and it is computationally efficient (most of them only take less than a second to train in a 4 cores CPU machine).     
+
+%------------------------------------------------------------------------------
+\subsection{Restricted Bolztmann Machine}\label{sebsec:results.rbm}
+
+We trained around 100 instances of RBM model as describes in \Cref{subsubsec:method.models.rbm}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.rbm}, we can see some facts about turning parameters as below.
+
+For the number of hidden nodes, it turns out to be the best when set it around 15-20. If this number is too small, the model will be underfitting, but setting this number to large does not help the model to predict better.
+
+For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much (we need to do sampling for every (movie, user) couple.)
+
+It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
+
+%------------------------------------------------------------------------------
+\subsection{Model Comparison}\label{sebsec:results.model}
+
+\Cref{tab:results.model} contains a comparison of the best version of each of the four models we considered. 
+
+The $K$-NN models perform worse than $NN$ and matrix completion and require much more computing time. This approach does not seem very promising as a predictive model for movie ratings.
+
+The $NN$ models yield interesting results and can be trained efficiently. They achieve lower CV MSE than matrix completion, but their generalization to the testing set is worse. It is worthwhile to note that they do not achieve the performance level of matrix completion even though more information is included in the model. Indeed, matrix completion does not use movie genre and tags nor user information.
+
+The SVD matrix completion model results show that this simple model can outperform many other complicated models. Simon Funk, a participant in the Netflix prize competition \citep{bennett2007netflix}, used this simple model and finished in third place.\footnote{\url{https://sifter.org/~simon/journal/20061211.html}} Its computational efficiency, compared to all three other models, is also a very appealing feature.
+
+The RBM model, while a beautiful latent variable model, really needs time and expertise to be able to set it up correctly and implemenent efficiently.  
+
+Overall, matrix completion using SVD out-performs all other models in MSE and classification accuracy on the testing set. Therefore, we choose that approach for the subsequent analyses.
+
+\input{./table/model.tex}
+
+
+%------------------------------------------------------------------------------
+\section{Exploratory Analysis}\label{sec:explore}
+
+In order to extract insight out of our predictive model, we propose to ways to explore the relationship between the extra information---movie genres and tags, user demographics---and the predicted ratings. Ultimately, what our model tells us about the predicted ratings can be translated into knowledge about the population of movies and the population of users. The proposed methods serve mostly as proofs of concept or blueprints more than actual analyses: we are mostly interested on how we can retrieve information from the model rather than the actual information itself.
+
+%------------------------------------------------------------------------------
+\subsection{Correlating Predictions with External Information}\label{subsec:explore.corr}
+
+Our first approach relies only on the predictive nature of our model and thus do not depend on the actual type of model selected. As a first step, we make every user rate every movie in order to remove the sampling bias introduced by the users choosing which movie to watch (and then rate them). The matrix completion model provide us with that for free as the low-rank approximation contains exactly those prediction. Second, we standardize the predictions by subtracting the mean predicted rating of each user from all its predictions: this has the effect of removing the effect of users having different scales. Indeed, a rating of 4 might not mean the same thing for each user and we need to account for that. Then, we treat the predicted rating differences as ``observed'' and study how they vary with respect to both populations. For categorical features, we can average predicted rating differences within each subgroups. For numerical features, we can study the variation using a fitted smooth curve.
+
+As an example, we consider the variation of predicted rating differences with respect to movie genres, user gender and user age. Since both genres and gender are categorical variables, we simply subset the predictions according to all combinations of those features. Then, within each subset, we fit a generalized additive model (GAM)\footnote{Fitted using the \texttt{pyGAM} package \citep{pygam}.} between the predicted rating differences and age. The results can be found in \Cref{fig:explore.corr.gam}.
+
+\begin{figure}
+    \centering
+	\includegraphics[scale=0.7]{rating_diff_per_age_gender_genre}
+	\caption{Variation of predicted rating differences with repect to movie genre, user gender and user age. For each subset given by a genre-gender combination, a GAM is fitted against user age. Solid lines represent the fitted mean; dashed lines corresponds to 95\% confidence intervals around the fitted mean.\label{fig:explore.corr.gam}}
+\end{figure}
+
+If we consider \textit{Documentary} movies, we can see that younger males and older females tend to rate such movies better than their average while younger females and older males tends to rate them around their average. \textit{Thriller} and \textit{Sci-Fi} movies seems to be under-appreciated by the whole user population while \textit{Drama} movies seems to be generally well-received by all users.
+
+%------------------------------------------------------------------------------
+\subsection{Bi-Clustering using SVD}\label{subsec:explore.cluster}
+
+Our second approach relies on the output of the matrix completion ratings model. The singular value decomposition resulting from the matrix completion produces left- and right- singular vectors within $U$ and $V$, respectively. The matrix $U\in\bbR^{n_{\text{movies}}\times 4}$ then contains then contains a 4-dimensional embedding of each movie; the matrix $V\in\bbR^{4\times n_{\text{users}}}$ contains a 4-dimensional embedding of the users. Studying these embeddings with respect to external information can infrom us on the relationship between the population of movies and of movies through ratings.
+
+\Cref{fig:explore.cluster.movies,fig:explore.cluster.users} contain scatter plots of these embeddings. Visual inspection 
+
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}[t]{0.5\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{movie_clusters}
+	\caption{ted mean.\label{fig:explore.cluster.movies}}
+    \end{subfigure}%
+    ~ 
+    \begin{subfigure}[t]{0.5\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{user_clusters}
+	\caption{d mean.\label{fig:explore.cluster.users}}
+    \end{subfigure}
+    \caption{Caption place holder}
+\end{figure*}
+
+
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.6\textwidth]{user_movie_clusters}
+	\caption{d mean.\label{fig:explore.cluster.pairs}}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{movie_clusters_genre}
+	\caption{ted mean.\label{fig:explore.cluster.genre}}
+\end{figure}
+
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\textwidth]{user_clusters_occupation}
+	\caption{d mean.\label{fig:explore.cluster.occupation}}
+\end{figure}
+%------------------------------------------------------------------------------
+\section{Conclusion}\label{sec:conc}
+
+
+
+%------------------------------------------------------------------------------
+\clearpage
+\newpage
+\bibliographystyle{imsart-nameyear}
+\bibliography{../utils/references}{}
+
+
+%------------------------------------------------------------------------------
+\clearpage
+\newpage
+\appendix 
+
+%------------------------------------------------------------------------------
+\section{Contributions}\label{sec:contrib}
+
+The work was subdivided as follows. Simon worked on $K$-NN and NN models, Dat on matrix completion and RBM models. Each implemented, trained and analyzed the respective models; the respective part of the report were written accordingly. The exploratory data analysis was performed jointly: Simon wrote the first method and Dat wrote the bi-clustering section. The rest of the report was written jointly.
+
+%------------------------------------------------------------------------------
+\section{Derivations for Restricted Bolztmann Machine}\label{sec:rbm}
+
 %------------------------------------------------------------------------------
 \paragraph{Learning.}\label{par:method.models.rbm.learning}
 
@@ -345,151 +520,16 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 \end{align*}
 
 
+\clearpage
+\newpage
 %------------------------------------------------------------------------------
-\paragraph{Implementation details.}\label{par:method.models.rbm.impl}
-
-We build and train a RBM model by ourselves using basic modules such as \texttt{numpy} \citep{numpy2011}. There are three turning parameters in the model: the number of hidden nodes, the number of Gibbs samplings in Contrastive Divergence, and the learning rate. Many details in the implementation is taken from \cite{hinton2012practical}.
-
-
-%------------------------------------------------------------------------------
-\section{Results}\label{sec:results}
-
-We perform 5-fold cross-validation on many instances of our models against the training set and produce the \textit{mean squared error} (MSE) and prediction accuracy averaged over the 5 folds. For models with numerical predictions, we assign the predicted rating to the nearest integer in the range $[1,5]$.  Models with class predictions simply use the class label as their numerical prediction. 
-
-It is worthwhile to mention that we are in a classification problem with 5 classes so a random assignment would produce 20\% accuracy: we observe accuracies close to 40\%, which is already a great improvement. To get a sense of ``good'' MSE values, we report that the winners of the Netflix prize \citep{bennett2007netflix} have a test score of \num{0.8567} on a similarly structured dataset.
-
-We first detail the results for the four models we consider, noting some observation on their CV performance. Then, we proceed to a comparison of the four models in terms of CV and testing.
-
-%------------------------------------------------------------------------------
-\subsection{$K$-Nearest-Neighbors}\label{sebsec:results.knn}
-
-Upon training and testing 35 instances of the $K$-NN model described in \Cref{subsubsec:method.models.knn} with varying tuning parameters, we obtain the results depicted in \Cref{tab:results.knn} which contains a selection of the best models.
-
-As could be expected, regression aggregation performs better in terms of MSE while classification aggregation performs better in terms of prediction accuracy. Also, the value of the tuning parameters $\alpha_\text{user}$ and $\alpha_\text{tags}$ for these best models seems to align with their purpose. Indeed, we observe that the best models require to inflate the importance of user information and deflate that of tags.
-
-The  $K$-NN models is particularly inefficient computationally: when $K$ increases from 5 to 100, training time increases from minutes to hours.
+\section{Detailed results}\label{sec:res}
+\Cref{tab:results.knn,tab:results.svd,tab:results.rbm,tab:results.nn} contain some of the best models trained for each of the four prediction methods considered. The complete logs can be found alongside the project's code at \url{https://github.com/fontaine618/507-Project/}.
 
 \input{./table/knn.tex}
-
-
-%------------------------------------------------------------------------------
-\subsection{Neural Network}\label{sebsec:results.nn}
-
-We trained hundreds of instances of the NN approach described in \Cref{subsubsec:method.models.nn}; the results for a selection of the best models can be found in \Cref{tab:results.nn}. We make some observations with regards to the tuning parameters.
-
-First, we observe that including the external features (genre, tags, user info) greatly improves the model as we see a significant reduction in MSE prediction accuracy. 
-
-Second, we note that the ordinal transformation does not appear in the best results: inspecting the complete logs, we find that this method performs better than classification in terms of MSE but worse in terms of prediction and is therefore in the middle of the pack in both categories. The classification scheme yields decent prediction performance, but we see even better accuracy from regression approaches. The three regression transformation---identity, ReLU6 and sigmoid---seem to perform rather similarly with the sigmoid transform being slightly worse generally.
-
-Third, the best performing models in terms of CV metrics seem to require simpler hidden layers structures: while the experiments included networks with up to four hidden layers, the best models generally contain only two. This exhibits the benefit of using CV for model selection as it prevents overfitting. Similarly, the best models generally require some regularization---through weight decay---in order to exhibit good generalization metrics.
-
-In terms of computing time, the NN models we consider train for 50 epochs in around 1 minute on GPU.
-
-
-\input{./table/nn.tex}
-
-
-%------------------------------------------------------------------------------
-\subsection{Matrix completion}\label{sebsec:results.svd}
-We trained around 100 instances of matrix completion models described in \Cref{subsubsec:method.models.svd}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.svd}, we can see some facts about turning parameters as below.
-
-For the embedded dimension $k$, if it is chosen to be too small, the model will not capture enough the complexity of the data and lead to the underfitting phenomena. If $k$ is large, the computational time will relatively increase but the prediction is not getting better, and there is even the overfitting phenomena. 
-
-For the iterative number $I$ to use SVD, it can be seen that small $I$ leads to underfitting model meanwhile large $I$ leads to overfitting model. This can be interpreted that if we reuse the training data too many times, the model will tend to prefer the training data and the test error will eventually increase. If $k$ and $I$ are large at the same time, the model will be surely overfitting.
-
-It is amazing that this model only needs a few lines of code but the performance is comparable to what the complicated models like Neural network or Restricted Boltzmann Machine do. The idea behind this method is also innocent and it is computationally efficient (most of them only take less than a second to train in a 4 cores CPU machine).     
-
 \input{./table/svd.tex}
-
-%------------------------------------------------------------------------------
-\subsection{Restricted Bolztmann Machine}\label{sebsec:results.rbm}
-
-We trained around 100 instances of RBM model as describes in \Cref{subsubsec:method.models.rbm}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.rbm}, we can see some facts about turning parameters as below.
-
-For the number of hidden nodes, it turns out to be the best when set it around 15-20. If this number is too small, the model will be underfitting, but setting this number to large does not help the model to predict better.
-
-For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much (we need to do sampling for every (movie, user) couple.)
-
-It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
-
 \input{./table/rbm.tex}
-
-%------------------------------------------------------------------------------
-\subsection{Model comparison}\label{sebsec:results.model}
-
-\Cref{tab:results.model} contains a comparison of the best version of each of the four models we considered. 
-
-The $K$-NN models perform worse than $NN$ and matrix completion and require much more computing time. This approach does not seem very promising as a predictive model for movie ratings.
-
-The $NN$ models yield interesting results and can be trained efficiently. They achieve lower CV MSE than matrix completion, but their generalization to the testing set is worse. It is worthwhile to note that they do not achieve the performance level of matrix completion even though more information is included in the model. Indeed, matrix completion does not use movie genre and tags nor user information.
-
-The SVD matrix completion model results show that this simple model can outperform many other complicated models. Simon Funk, a participant in the Netflix prize competition \citep{bennett2007netflix}, used this simple model and finished in third place.\footnote{\url{https://sifter.org/~simon/journal/20061211.html}} Its computational efficiency, compared to all three other models, is also a very appealing feature.
-
-The RBM model, while a beautiful latent variable model, really needs time and expertise to be able to set it up correctly and implemenent efficiently.  
-
-Overall, matrix completion using SVD out-performs all other models in MSE and classification accuracy on the testing set. Therefore, we choose that approach for the subsequent analyses.
-
-\input{./table/model.tex}
-
-
-%------------------------------------------------------------------------------
-\section{Exploratory Analysis}\label{sec:explore}
-
-In order to extract insight out of our predictive model, we propose to ways to explore the relationship between the extra information---movie genres and tags, user demographics---and the predicted ratings. Ultimately, what our model tells us about the predicted ratings can be translated into knowledge about the population of movies and the population of users. The proposed methods serve mostly as proofs of concept or blueprints more than actual analyses: we are mostly interested on how we can retrieve information from the model rather than the actual information itself.
-
-%------------------------------------------------------------------------------
-\subsection{Correlating Predictions with External Information}\label{subsec:explore.corr}
-
-Our first approach relies only on the predictive nature of our model and thus do not depend on the actual type of model selected. As a first step, we make every user rate every movie in order to remove the sampling bias introduced by the users choosing which movie to watch (and then rate them). The matrix completion model provide us with that for free as the low-rank approximation contains exactly those prediction. Second, we standardize the predictions by subtracting the mean predicted rating of each user from all its predictions: this has the effect of removing the effect of users having different scales. Indeed, a rating of 4 might not mean the same thing for each user and we need to account for that. Then, we treat the predicted rating differences as ``observed'' and study how they vary with respect to both populations. For categorical features, we can average predicted rating differences within each subgroups. For numerical features, we can study the variation using a fitted smooth curve.
-
-As an example, we consider the variation of predicted rating differences with respect to movie genres, user gender and user age. Since both genres and gender are categorical variables, we simply subset the predictions according to all combinations of those features. Then, within each subset, we fit a generalized additive model (GAM)\footnote{Fitted using the \texttt{pyGAM} package \citep{pygam}.} between the predicted rating differences and age. The results can be found in \Cref{fig:explore.corr.gam}.
-
-\begin{figure}
-	\includegraphics[scale=0.7]{rating_diff_per_age_gender_genre}
-	\caption{Variation of predicted rating differences with repect to movie genre, user gender and user age. For each subset given by a genre-gender combination, a GAM is fitted against user age. Solid lines represent the fitted mean; dashed lines corresponds to 95\% confidence intervals around the fitted mean.\label{fig:explore.corr.gam}}
-\end{figure}
-
-If we consider \textit{Documentary} movies, we can see that younger males and older females tend to rate such movies better than their average while younger females and older males tends to rate them around their average. \textit{Thriller} and \textit{Sci-Fi} movies seems to be under-appreciated by the whole user population while \textit{Drama} movies seems to be generally well-received by all users.
-
-%------------------------------------------------------------------------------
-\subsection{Bi-Clustering using SVD}\label{subsec:explore.cluster}
-
-Our second approach relies on the output of the matrix completion ratings model. The singular value decomposition resulting from the matrix completion produces left- and right- singular vectors within $U$ and $V$, respectively. The matrix $U\in\bbR^{n_{\text{movies}}\times 4}$ then contains then contains a 4-dimensional embedding of each movie; the matrix $V\in\bbR^{4\times n_{\text{users}}}$ contains a 4-dimensional embedding of the users. Studying these embeddings with respect to external information can infrom us on the relationship between the population of movies and of movies through ratings.
-
-\Cref{fig:explore.cluster.movies,fig:explore.cluster.users} contain scatter plots of these embeddings. Visual inspection 
-
-\begin{figure}
-	\includegraphics[scale=0.50]{movie_clusters}
-	\caption{ted mean.\label{fig:explore.cluster.movies}}
-\end{figure}
-
-
-\begin{figure}
-	\includegraphics[scale=0.50]{user_clusters}
-	\caption{d mean.\label{fig:explore.cluster.users}}
-\end{figure}
-
-
-%------------------------------------------------------------------------------
-\section{Conclusions}\label{sec:conc}
-
-%%------------------------------------------------------------------------------
-%\section{Final report}\label{sec:final}
-%
-%For the final report, we will use results from the above model comparison in order to select a final model. Then, we will proceed to an exploratory data analysis using that model in order to extract insight about ratings with respect to user and movie information.
-
-%------------------------------------------------------------------------------
-\section{Contributions}\label{sec:contrib}
-
-The work was subdivided as follows: Simon worked on $K$-NN and NN models, Dat on matrix completion and RBM models. Each implemented, trained and analyzed the respective models; the respective part of the report were written accordingly. The remainder of the work was performed jointly.
-
-%------------------------------------------------------------------------------
-\newpage
-\bibliographystyle{imsart-nameyear}
-\bibliography{../utils/references}{}
-
-
-
+\input{./table/nn.tex}
 
 
 \end{document}
