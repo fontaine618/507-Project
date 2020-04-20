@@ -1,0 +1,56 @@
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcclccccc}
+\toprule
+           & \multicolumn{2}{c}{Embeddings} &  &   &  \multicolumn{2}{c}{CV} & \multicolumn{2}{c}{Test} \\
+           \cmidrule(lr){2-3}\cmidrule(lr){6-7}\cmidrule(l){8-9}
+Transform & User & Movie & Hidden layers &  Decay & MSE & Acc. & MSE & Acc.  \\
+\midrule
+\multicolumn{8}{c}{\textbf{With features---Best MSE}}\\\addlinespace
+RegressorRelu6 & 128 & 64 & 1024, 128, 64 & $10^{-6}$   &  0.9402 &      0.3985 &   0.9016 &        0.4165 \\
+           &     &    & 1024, 128 & $10^{-6}$   &  0.9461 &      0.3810 &   0.9516 &        0.3810 \\
+           &     &    &                                 & $10^{-4}$   &  0.9546 &      0.3758 &   0.9489 &        0.3841 \\
+Regressor & 128 & 64 & 1024, 128 & $10^{-5}$   &  0.9676 &      0.3870 &   0.9869 &        0.3631 \\
+RegressorRelu6 & 128 & 64 & 1024, 128 & ---   &  0.9693 &      0.3729 &   0.9418 &        0.3869 \\
+Regressor & 128 & 64 & 1024, 128, 64 & $10^{-6}$   &  0.9915 &      0.3874 &   1.0240 &        0.3570 \\
+RegressorRelu6 & 128 & 64 & 1024, 128, 64 & ---   &  0.9944 &      0.3749 &   1.1091 &        0.3330 \\
+%Regressor & 128 & 64 & 1024, 128, 64 & $10^{-5}$   &  1.0155 &      0.3857 &   0.9780 &        0.3711 \\
+%           &     &    & 1024, 128 & ---   &  1.0227 &      0.3645 &   0.9419 &        0.3800 \\
+%RegressorRelu6 & 128 & 64 & 1024, 128 & $10^{-5}$   &  1.0240 &      0.3652 &   0.9440 &        0.3843 \\
+%           &     &    & 1024, 128, 64 & $10^{-4}$   &  1.0253 &      0.3650 &   0.8911 &        0.4051 \\
+%Regressor & 128 & 64 & 1024, 128 & $10^{-6}$   &  1.0635 &      0.3586 &   0.9343 &        0.3823 \\
+\midrule
+\multicolumn{8}{c}{\textbf{With features---Best Accuracy}}\\\addlinespace
+RegressorRelu6 & 128 & 64 & 1024, 128, 64 & $10^{-6}$   &  0.9402 &      0.3985 &   0.9016 &        0.4165 \\
+Regressor & 128 & 64 & 1024, 128, 64 & $10^{-6}$   &  0.9915 &      0.3874 &   1.0240 &        0.3570 \\
+           &     &    & 1024, 128 & $10^{-5}$   &  0.9676 &      0.3870 &   0.9869 &        0.3631 \\
+           &     &    & 1024, 128, 64 & $10^{-5}$   &  1.0155 &      0.3857 &   0.9780 &        0.3711 \\
+RegressorRelu6 & 128 & 64 & 1024, 128 & $10^{-6}$   &  0.9461 &      0.3810 &   0.9516 &        0.3810 \\
+Classifier & 128 & 64 & 1024, 128 & $10^{-6}$   &  1.1216 &      0.3795 &   1.1070 &        0.3918 \\
+           &     &    &                                 & $10^{-5}$   &  1.1219 &      0.3794 &   1.1071 &        0.3914 \\
+           &     &    &                                 & ---   &  1.1218 &      0.3794 &   1.1066 &        0.3919 \\
+           &     &    &                                 & $10^{-4}$   &  1.1213 &      0.3793 &   1.1063 &        0.3915 \\
+%RegressorRelu6 & 128 & 64 & 1024, 128 & $10^{-4}$   &  0.9546 &      0.3758 &   0.9489 &        0.3841 \\
+%           &     &    & 1024, 128, 64 & ---   &  0.9944 &      0.3749 &   1.1091 &        0.3330 \\
+%           &     &    & 1024, 128 & ---   &  0.9693 &      0.3729 &   0.9418 &        0.3869 \\
+\midrule
+\multicolumn{8}{c}{\textbf{Without features---Best MSE}}\\\addlinespace
+Regressor & 128 & 64 & 1024, 128 & $10^{-6}$  &  1.1661 &      0.3364 &   1.1633 &        0.3370 \\
+RegressorRelu6 & 128 & 64 & 1024, 128 & $10^{-5}$  &  1.1670 &      0.3364 &   1.1802 &        0.3339 \\
+           &     &    &                                 & $10^{-6}$  &  1.1685 &      0.3372 &   1.1606 &        0.3365 \\
+           &     &    &                                 & ---  &  1.1720 &      0.3363 &   1.1537 &        0.3410 \\
+Regressor & 128 & 64 & 1024, 128 & $10^{-5}$  &  1.1733 &      0.3358 &   1.1878 &        0.3318 \\
+\midrule
+\multicolumn{8}{c}{\textbf{Without features---Best Accuracy}}\\\addlinespace
+Classifier & 128 & 64 & 1024, 128 & $10^{-5}$  &  1.3126 &      0.3528 &   1.2825 &        0.3577 \\
+           &     &    &                                 & $10^{-6}$  &  1.3127 &      0.3528 &   1.2823 &        0.3576 \\
+           &     &    &                                 & ---  &  1.3128 &      0.3528 &   1.2822 &        0.3575 \\
+           
+           
+
+\bottomrule
+\end{tabular}
+\caption{Cross-validation and testing metrics of some of the best neural network models trained on the \texttt{MovieLens} dataset. The complete logs can be found alongside the project's code at \url{https://github.com/fontaine618/507-Project/}.}
+\label{tab:results.nn}
+\end{table}
