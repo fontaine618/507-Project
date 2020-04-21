@@ -43,7 +43,7 @@
 
 
 \begin{abstract}
-\textbf{Summary.} The \texttt{MovieLens} datasets contain user ratings of movies as well as movie and user information. In this report, we consider four predictive models of the ratings based on the available information: $K$-nearest-neighbors, neural networks, matrix completion using singular value decomposition and  restricted Bolztmann machine. We tune all models to finally compare them on their out-of-sample performance: matrix completion produces the best testing metrics. Then, we propose two exploratory analysis methods in order to extract insight from the selected predictive model. All code and results can be found at \url{https://github.com/fontaine618/507-Project/}.
+\textbf{Summary.} The \texttt{MovieLens} datasets contain user ratings of movies as well as movie and user information. In this report, we consider four predictive models of the ratings based on the available information: $K$-nearest-neighbors, neural networks, matrix completion using singular value decomposition and  restricted Boltzmann machine. We tune all models to finally compare them on their out-of-sample performance: matrix completion produces the best testing metrics. Then, we propose two exploratory analysis methods in order to extract insight from the selected predictive model. All code and results can be found at \url{https://github.com/fontaine618/507-Project/}.
 \end{abstract}
 
 \end{frontmatter}
@@ -357,7 +357,7 @@ For the iterative number $I$ to use SVD, it can be seen that small $I$ leads to 
 It is amazing that this model only needs a few lines of code but the performance is comparable to what the complicated models like Neural network or Restricted Boltzmann Machine do. The idea behind this method is also innocent and it is computationally efficient (most of them only take less than a second to train in a 4 cores CPU machine).     
 
 %------------------------------------------------------------------------------
-\subsection{Restricted Bolztmann Machine}\label{sebsec:results.rbm}
+\subsection{Restricted Boltzmann Machine}\label{sebsec:results.rbm}
 
 We trained around 100 instances of RBM model as describes in \Cref{subsubsec:method.models.rbm}. We choose to present some models with its parameters. From the result, in \Cref{tab:results.rbm}, we can see some facts about turning parameters as below.
 
@@ -453,7 +453,7 @@ We also plot the average ratings of each pair of (movies cluster, users cluster)
 %------------------------------------------------------------------------------
 \section{Conclusion}\label{sec:conc}
 
-Experimenting with various approaches to train an effective predictive models for user ratings of movies allowed us to identify that matrix completion using a singular value decomposition exhibited the best performance out of all models considered. This simple, fast and interpretable technique has lower testing prediction error and higher testing accuracy than $K$-nearest-neighbors, neural networks and restricted Bolztmann machine. Interestingly, it is able to produce better results than its competitor even though no external information is included in the model. 
+Experimenting with various approaches to train effective predictive models for user ratings of movies allowed us to identify that matrix completion using a singular value decomposition exhibited the best performance out of all models considered. This simple, fast and interpretable technique has lower testing prediction error and higher testing accuracy than $K$-nearest-neighbors, neural networks and restricted Boltzmann machine. Interestingly, it is able to produce better results than its competitor even though no external information is included in the model. 
 
 We also proposed two methods to extract insight out of the predictive models. The first one, applicable to any such model, compares predicted ratings to external information in order to study the joint variation. The second one, using the results from the SVD, allows us to easily cluster users and movies: the study of the composition of the clusters, as well as how clusters relate to each other in terms of predicted ratings, provides interesting information about the two populations. These two approaches can easily be extended to larger datasets with additional features to investigate more precisely the interaction between users and movies.
 
@@ -477,7 +477,7 @@ We also proposed two methods to extract insight out of the predictive models. Th
 The work was subdivided as follows. Simon worked on $K$-NN and NN models, Dat on matrix completion and RBM models. Each implemented, trained and analyzed the respective models; the respective part of the report were written accordingly. The exploratory data analysis was performed jointly: Simon wrote the first method and Dat wrote the bi-clustering section. The rest of the report was written jointly.
 
 %------------------------------------------------------------------------------
-\section{Derivations for Restricted Bolztmann Machine}\label{sec:rbm}
+\section{Derivations for Restricted Boltzmann Machine}\label{sec:rbm}
 
 %------------------------------------------------------------------------------
 \paragraph{Learning.}\label{par:method.models.rbm.learning}
