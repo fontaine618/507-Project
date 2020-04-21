@@ -5,28 +5,29 @@ import numpy as np
 
 train, test, features = data.load_train_test_and_feature_list()
 
-for w in [*np.logspace(-6, -2, num=6)][2:]:
-    for layers in [
-        [(512, "relu"), (64, "relu")],
-        [(1024, "relu"), (64, "relu")],
-        [(1024, "relu"), (128, "relu")],
-        [(1024, "relu"), (256, "relu"), (64, "relu")],
-    ]:
-        for n_embed_users in [32, 64]:
-            for n_embed_movies in [64, 128]:
-                nn = models.NNEmbed(
-                    type="RegressorRelu6",
-                    layers=layers,
-                    n_embed_users=n_embed_users,
-                    n_embed_movies=n_embed_movies,
-                    use_features=True,
-                    weight_decay=w
-                )
-                nn.add_train_data(train, "rating", features)
-                nn.train()
-                nn.cv()
-                nn.test(test)
-                nn.log()
+for type in ["Classifier"]:
+    for w in [0, *np.logspace(-6, -4, num=3)]:
+        for layers in [
+            [(64, "relu"), (64, "relu")],
+            [(128, "relu"), (128, "relu")],
+            [(128, "relu"), (64, "relu")],
+            [(128, "relu"), (64, "relu"), (64, "relu")],
+        ]:
+            for n_embed_users in [32, 64]:
+                for n_embed_movies in [64, 128]:
+                    nn = models.NNEmbed(
+                        type=type,
+                        layers=layers,
+                        n_embed_users=n_embed_users,
+                        n_embed_movies=n_embed_movies,
+                        use_features=False,
+                        weight_decay=w
+                    )
+                    nn.add_train_data(train, "rating", features)
+                    nn.train()
+                    nn.cv()
+                    nn.test(test)
+                    nn.log()
 
 
 

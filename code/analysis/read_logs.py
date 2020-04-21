@@ -37,33 +37,39 @@ def read_logs(metrics: pd.DataFrame):
 metrics = pd.read_table("models/log/svd.tsv", index_col="description")
 
 # NN
-# metrics = pd.read_table("models/log/nn.tsv", index_col="description")
-# df = read_logs(metrics)
-# df["layers"] = [str(l) for l in df["layers"]]
-# df_features = df.set_index(["use_features", "type", "n_embed_users", "n_embed_movies", "layers"]).drop(columns=[
-#     "num_epochs", "seed", "device", "lr", "n_movies", "n_users", "batch_size", "time"
-# ])
-#
-# metrics = pd.read_table("models/log/nn_nofeatures.tsv", index_col="description")
-# df = read_logs(metrics)
-# df["layers"] = [str(l) for l in df["layers"]]
-# df_nofeatures = df.set_index(["use_features", "type", "n_embed_users", "n_embed_movies", "layers"]).drop(columns=[
-#     "num_epochs", "seed", "device", "lr", "n_movies", "n_users", "batch_size", "time"
-# ])
-#
-# df = df_nofeatures
-# bests = df[(df["cv_mse"] < 1.08) | (df["cv_accuracy"] > 0.36)]
+metrics = pd.read_table("models/log/nn.tsv", index_col="description")
+df = read_logs(metrics)
+df["layers"] = [str(l) for l in df["layers"]]
+df_features = df.set_index(["use_features", "type", "n_embed_users", "n_embed_movies", "layers", "weight_decay"]).drop(columns=[
+    "num_epochs", "seed", "device", "lr", "n_movies", "n_users", "batch_size", "time", "n_classes"
+])
+
+metrics = pd.read_table("models/log/nn_nofeatures.tsv", index_col="description")
+df = read_logs(metrics)
+df["layers"] = [str(l) for l in df["layers"]]
+df_nofeatures = df.set_index(["use_features", "type", "n_embed_users", "n_embed_movies", "layers"]).drop(columns=[
+    "num_epochs", "seed", "device", "lr", "n_movies", "n_users", "batch_size", "time", "n_classes"
+])
+
+df = df_features
+bests = df[(df["cv_mse"] < 0.96) | (df["cv_accuracy"] > 0.38)]
 # bests.index = bests.index.droplevel()
-# table = bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
-# table.sort_values(by="cv_mse", inplace=True)
-# table = table.applymap("{0:.4f}".format)
-# table.to_latex(
-#     buf="../tex/Report/table/nn_nofeatures.tex",
-#     caption="sdfsdfs",
-#     label="tab:results.nn"
-# )
+table = bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+table.sort_values(by="cv_mse", inplace=True)
+table = table.applymap("{0:.4f}".format)
+table.to_latex(
+    buf="../tex/Report/table/nn_nofeatures.tex",
+    caption="sdfsdfs",
+    label="tab:results.nn"
+)
 
-
+df = df_features[df_features.index.get_level_values(0) == False]
+bests = df[(df["cv_mse"] < 1.05) | (df["cv_accuracy"] > 0.36)]
+# bests.index = bests.index.droplevel()
+table = bests[["cv_mse", "cv_accuracy", "test_mse", "test_accuracy"]]
+table.sort_values(by="cv_accuracy", inplace=True, ascending=False)
+table = table.applymap("{0:.4f}".format)
+print(table.to_latex())
 
 # KNN
 # metrics = pd.read_table("models/log/knn.tsv", index_col="description")
