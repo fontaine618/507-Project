@@ -303,7 +303,7 @@ p(h_j = 1 | \textbf{V}) = \sigma(b_j + \sum_{i=1}^{m}\sum_{k=1}^{K} v_i^k W_{ij}
 \end{equation}
 where $\sigma$ is the sigmoid function. The marginal distribution for $\textbf{V}$ is
 $$p(\textbf{V}) = \dfrac{1}{Z} \sum_{\textbf{h'}} \exp(-E(\textbf{V}, \textbf{h'})).$$
-Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximizing the marginal distribution for visible ratings $\textbf{V}$, which corresponds to the \textit{maximum likelihood} method. We will employ gradient descent to find the optimal weights. 
+Our aim is to find $(W_{ij}^{k}, b_{i}^{k}, b_j)_{i,j,k}$ maximizing the marginal distribution for visible ratings $\textbf{V}$, which corresponds to the \textit{maximum likelihood} method. We will employ gradient descent to find the optimal weights. Details about learning and predicting can be found in Appendix \ref{sec:rbm}.
 
 
 %------------------------------------------------------------------------------
@@ -364,9 +364,9 @@ We trained around 100 instances of RBM model as describes in \Cref{subsubsec:met
 
 For the number of hidden nodes, it turns out to be the best when set it around 15-20. If this number is too small, the model will be underfitting, but setting this number to large does not help the model to predict better.
 
-For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, because it does not help to improve the model significantly when it increases, but slow down the learning phase much (we need to do sampling for every (movie, user) couple.)
+For the number of Gibbs samplings to use in Contrastive Divergence, it is plausible to set it 1, as it does not help to improve the model significantly when it increases, but slow down the learning phase much (indeed, we need to do sampling for every (movie, user) couple.)
 
-It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models. In the time to the final report, we will keep trying improve our RBM model and see how far can we go compared to what is presented in that paper.
+It is claimed in \cite{10.1145/1273496.1273596} that RBM paper can outperform SVD models in a fine-tuned parameters scenario. However, we observe something contrary to that here. It may due to the fact that the research team at the University of Toronto spent several years to achieve the expertise in training RBM models so their implementation is more efficient. 
 
 %------------------------------------------------------------------------------
 \subsection{Model Comparison}\label{sebsec:results.model}
@@ -379,7 +379,7 @@ The $NN$ models yield interesting results and can be trained efficiently. They a
 
 The SVD matrix completion model results show that this simple model can outperform many other complicated models. Simon Funk, a participant in the Netflix prize competition \citep{bennett2007netflix}, used this simple model and finished in third place.\footnote{\url{https://sifter.org/~simon/journal/20061211.html}} Its computational efficiency, compared to all three other models, is also a very appealing feature.
 
-The RBM model, while a beautiful latent variable model, really needs time and expertise to be able to set it up correctly and implemenent efficiently.  
+The RBM model, while a beautiful latent variable model, really needs time and expertise to be able to set it up correctly and implement efficiently.  
 
 Overall, matrix completion using SVD out-performs all other models in MSE and classification accuracy on the testing set. Therefore, we choose that approach for the subsequent analyses.
 
@@ -401,7 +401,7 @@ As an example, we consider the variation of predicted rating differences with re
 \begin{figure}
     \centering
 	\includegraphics[scale=0.7]{rating_diff_per_age_gender_genre}
-	\caption{Variation of predicted rating differences with repect to movie genre, user gender and user age. For each subset given by a genre-gender combination, a GAM is fitted against user age. Solid lines represent the fitted mean; dashed lines corresponds to 95\% confidence intervals around the fitted mean.\label{fig:explore.corr.gam}}
+	\caption{Variation of predicted rating differences with respect to movie genre, user gender and user age. For each subset given by a genre-gender combination, a GAM is fitted against user age. Solid lines represent the fitted mean; dashed lines corresponds to 95\% confidence intervals around the fitted mean.\label{fig:explore.corr.gam}}
 \end{figure}
 
 If we consider \textit{Documentary} movies, we can see that younger males and older females tend to rate such movies better than their average while younger females and older males tends to rate them around their average. \textit{Thriller} and \textit{Sci-Fi} movies seems to be under-appreciated by the whole user population while \textit{Drama} movies seems to be generally well-received by all users.
@@ -409,45 +409,47 @@ If we consider \textit{Documentary} movies, we can see that younger males and ol
 %------------------------------------------------------------------------------
 \subsection{Bi-Clustering using SVD}\label{subsec:explore.cluster}
 
-Our second approach relies on the output of the matrix completion ratings model. The singular value decomposition resulting from the matrix completion produces left- and right- singular vectors within $U$ and $V$, respectively. The matrix $U\in\bbR^{n_{\text{movies}}\times 4}$ then contains then contains a 4-dimensional embedding of each movie; the matrix $V\in\bbR^{4\times n_{\text{users}}}$ contains a 4-dimensional embedding of the users. Studying these embeddings with respect to external information can infrom us on the relationship between the population of movies and of movies through ratings.
+Our second approach relies on the output of the matrix completion ratings model. The singular value decomposition resulting from the matrix completion produces left- and right- singular vectors within $U$ and $V$, respectively. The matrix $U\in\bbR^{n_{\text{movies}}\times 4}$ then contains then contains a 4-dimensional embedding of each movie; the matrix $V\in\bbR^{4\times n_{\text{users}}}$ contains a 4-dimensional embedding of the users. Studying these embeddings with respect to external information can inform us on the relationship between the population of movies and of movies through ratings. Because SVD is considered a "collaborative filtering" method, built on the philosophy that users do share their interests in watching movies, we can expect that the SVD results release information about users' groups and movies' groups.
 
-\Cref{fig:explore.cluster.movies,fig:explore.cluster.users} contain scatter plots of these embeddings. Visual inspection 
+\Cref{fig:explore.cluster.movies,fig:explore.cluster.users} contain scatter plots of these embeddings. The clustering patterns can be seen clearly.
 
 \begin{figure*}[t!]
     \centering
     \begin{subfigure}[t]{0.5\textwidth}
 	\centering
 	\includegraphics[width=\textwidth]{movie_clusters}
-	\caption{ted mean.\label{fig:explore.cluster.movies}}
+	\caption{Four clusters of movies\label{fig:explore.cluster.movies}}
     \end{subfigure}%
     ~ 
     \begin{subfigure}[t]{0.5\textwidth}
 	\centering
 	\includegraphics[width=\textwidth]{user_clusters}
-	\caption{d mean.\label{fig:explore.cluster.users}}
+	\caption{Three clusters of user\label{fig:explore.cluster.users}}
     \end{subfigure}
-    \caption{Caption place holder}
+    \caption{Clustering users and movies on first four principle components}
 \end{figure*}
 
+We want to learn about the clusters by considering the correlations between them and other features of users and movies. Figures \ref{fig:explore.cluster.genre} and \ref{fig:explore.cluster.occupation} represent movie cluster frequency per movie genre and user cluster frequency per occupation, respectively. As we can see in \ref{fig:explore.cluster.genre}, the first movie cluster is highly correlated to Documentary, Fantasy, and Mystery genre; meanwhile the second corresponds to Western; the third one is Crime and Film-Noir; the last one is about Animation and Musical. 
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=\textwidth]{movie_clusters_genre}
+	\caption{Movies cluster frequency per genre.\label{fig:explore.cluster.genre}}
+\end{figure}
 
+Similarly, for users clusters, it can be seen that the first cluster is mainly about doctors; the second cluster is corresponding to retired users and a part of art and health care; the last cluster contains most of the rest occupations. We can also notice that the proportion of users doing marketing belong to all there clusters equally, and almost no doctor belongs to cluster 3.
+
+We also plot the average ratings of each pair of (movies cluster, users cluster). It appears that movies of cluster 4 (Animation and Musical) are liked by user cluster 3 (users of most of the occupations except doctors and retied); movies of cluster 3 (Crime, Film-Noir, and Mystery) have a high average rating by all users; users of cluster 1 (mostly doctors) only watch movies from cluster 2 (Documentary, Western) and 3 (Crime and Film-Noir), and prefer movies from the latter cluster.
+
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=\textwidth]{user_clusters_occupation}
+	\caption{Users cluster frequency per occupation.\label{fig:explore.cluster.occupation}}
+\end{figure}
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.6\textwidth]{user_movie_clusters}
 	\caption{d mean.\label{fig:explore.cluster.pairs}}
-\end{figure}
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\textwidth]{movie_clusters_genre}
-	\caption{ted mean.\label{fig:explore.cluster.genre}}
-\end{figure}
-
-
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=\textwidth]{user_clusters_occupation}
-	\caption{d mean.\label{fig:explore.cluster.occupation}}
 \end{figure}
 %------------------------------------------------------------------------------
 \section{Conclusion}\label{sec:conc}
