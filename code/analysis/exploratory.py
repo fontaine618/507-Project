@@ -55,8 +55,10 @@ out = avg_rating.pivot_table(
 encoder = LabelEncoder()
 
 
-fig, axs = plt.subplots(3, 3, sharex=True, sharey=True, figsize=(6, 6))
-for genre, ax in zip(sorted(ratings["genre"].unique())[:9], axs.flat):
+fig, axs = plt.subplots(3, 3, sharex=True, sharey=True, figsize=(8, 6))
+for i, ax in zip([0, 1, 4, 6, 7, 8, 13, 14, 15],
+                     axs.flat):
+    genre = sorted(ratings["genre"].unique())[i]
     df = ratings[ratings["genre"] == genre]
     X = np.concatenate([
         df["age"].to_numpy().reshape((-1, 1)),
@@ -77,16 +79,16 @@ for genre, ax in zip(sorted(ratings["genre"].unique())[:9], axs.flat):
         axis=1
     ).astype(int)
     pdep, confi = gam.partial_dependence(term=0, X=XXF, width=0.95)
-    ax.plot(XXF[:, 0], pdep, c="r", label="Female")
-    ax.plot(XXF[:, 0], confi, c='r', ls='--', alpha=0.2)
+    ax.plot(XXF[:, 0], pdep, c="#C44E52", label="Female")
+    ax.plot(XXF[:, 0], confi, c='#C44E52', ls='--', alpha=0.2)
 
     XXM = np.concatenate(
         [np.arange(7, 74).reshape((-1, 1)), np.zeros((67, 1))],
         axis=1
     ).astype(int)
     pdep, confi = gam.partial_dependence(term=0, X=XXM, width=0.95)
-    ax.plot(XXM[:, 0], pdep, c="b", label="Male")
-    ax.plot(XXM[:, 0], confi, c='b', ls='--', alpha=0.2)
+    ax.plot(XXM[:, 0], pdep, c="#4C72B0", label="Male")
+    ax.plot(XXM[:, 0], confi, c='#4C72B0', ls='--', alpha=0.2)
 
     ax.hlines(0, xmin=7, xmax=73)
 

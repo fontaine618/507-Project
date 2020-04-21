@@ -1,4 +1,5 @@
 \documentclass[bj, preprint]{imsart}
+\usepackage[left=1.2in, right=1.2in, top=1in, bottom=1in]{geometry}
 \RequirePackage[OT1]{fontenc}
 \RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
 
@@ -40,7 +41,6 @@
 \affiliation{University of Michigan, Department of Statistics}
 \end{aug}
 
-\vspace{2cm}
 
 \begin{abstract}
 \textbf{Summary.} The \texttt{MovieLens} datasets contain user ratings of movies as well as movie and user information. In this report, we consider four predictive models of the ratings based on the available information: $K$-nearest-neighbors, neural networks, matrix completion using singular value decomposition and  restricted Bolztmann machine. We tune all models to finally compare them on their out-of-sample performance: matrix completion produces the best testing metrics. Then, we propose two exploratory analysis methods in order to extract insight from the selected predictive model. All code and results can be found at \url{https://github.com/fontaine618/507-Project/}.
@@ -49,7 +49,6 @@
 \end{frontmatter}
 
 
-\newpage
 \tableofcontents
 \newpage
 %------------------------------------------------------------------------------
@@ -224,7 +223,7 @@ Fifth, we can choose a different encoding for the five classes that will reflect
 
 \begin{figure}
 \centering
-	\includegraphics[scale=0.7]{nn}
+	\includegraphics[scale=0.8]{nn}
 	\caption{Neural network architecture.}
 	\label{fig:method.models.nn}
 \end{figure}
@@ -398,9 +397,9 @@ Our first approach relies only on the predictive nature of our model and thus do
 
 As an example, we consider the variation of predicted rating differences with respect to movie genres, user gender and user age. Since both genres and gender are categorical variables, we simply subset the predictions according to all combinations of those features. Then, within each subset, we fit a generalized additive model (GAM)\footnote{Fitted using the \texttt{pyGAM} package \citep{pygam}.} between the predicted rating differences and age. The results can be found in \Cref{fig:explore.corr.gam}.
 
-\begin{figure}
+\begin{figure}[t!]
     \centering
-	\includegraphics[scale=0.7]{rating_diff_per_age_gender_genre}
+	\includegraphics[scale=0.6]{rating_diff_per_age_gender_genre_9}
 	\caption{Variation of predicted rating differences with respect to movie genre, user gender and user age. For each subset given by a genre-gender combination, a GAM is fitted against user age. Solid lines represent the fitted mean; dashed lines corresponds to 95\% confidence intervals around the fitted mean.\label{fig:explore.corr.gam}}
 \end{figure}
 
@@ -409,9 +408,9 @@ If we consider \textit{Documentary} movies, we can see that younger males and ol
 %------------------------------------------------------------------------------
 \subsection{Bi-Clustering using SVD}\label{subsec:explore.cluster}
 
-Our second approach relies on the output of the matrix completion ratings model. The singular value decomposition resulting from the matrix completion produces left- and right- singular vectors within $U$ and $V$, respectively. The matrix $U\in\bbR^{n_{\text{movies}}\times 4}$ then contains then contains a 4-dimensional embedding of each movie; the matrix $V\in\bbR^{4\times n_{\text{users}}}$ contains a 4-dimensional embedding of the users. Studying these embeddings with respect to external information can inform us on the relationship between the population of movies and of movies through ratings. Because SVD is considered a "collaborative filtering" method, built on the philosophy that users do share their interests in watching movies, we can expect that the SVD results release information about users' groups and movies' groups.
+Our second approach relies on the output of the matrix completion ratings model. The singular value decomposition resulting from the matrix completion produces left- and right- singular vectors within $U$ and $V$, respectively. The matrix $U\in\bbR^{n_{\text{movies}}\times 4}$ then contains then contains a 4-dimensional embedding of each movie; the matrix $V\in\bbR^{4\times n_{\text{users}}}$ contains a 4-dimensional embedding of the users. Studying these embeddings with respect to external information can inform us on the relationship between the population of movies and of movies through ratings. Because SVD is considered a ``collaborative filtering'' method, built on the philosophy that users do share their interests in watching movies, we can expect that the SVD results contains information about users' groups and movies' groups.
 
-\Cref{fig:explore.cluster.movies,fig:explore.cluster.users} contain scatter plots of these embeddings. The clustering patterns can be seen clearly.
+\Cref{fig:explore.cluster.movies,fig:explore.cluster.users} contain scatter plots of these embeddings: clustering patterns can be seen clearly. Using the $K$-means algorithm\footnote{Using the \texttt{KMeans} class in \texttt{sklearn.cluster} \citep{scikit-learn}.}, we identify 4 movie clusters and 3 user clusters.
 
 \begin{figure*}[t!]
     \centering
@@ -429,16 +428,16 @@ Our second approach relies on the output of the matrix completion ratings model.
     \caption{Clustering users and movies on first four principle components}
 \end{figure*}
 
-We want to learn about the clusters by considering the correlations between them and other features of users and movies. Figures \ref{fig:explore.cluster.genre} and \ref{fig:explore.cluster.occupation} represent movie cluster frequency per movie genre and user cluster frequency per occupation, respectively. As we can see in \ref{fig:explore.cluster.genre}, the first movie cluster is highly correlated to Documentary, Fantasy, and Mystery genre; meanwhile the second corresponds to Western; the third one is Crime and Film-Noir; the last one is about Animation and Musical. 
+We want to learn about the clusters by considering the correlations between them and other features of users and movies. \Cref{fig:explore.cluster.genre,fig:explore.cluster.occupation} represent movie cluster frequency per movie genre and user cluster frequency per occupation, respectively. As we can see in \Cref{fig:explore.cluster.genre}, the first movie cluster is highly correlated to \textit{Documentary}, \textit{Fantasy}, and \textit{Mystery} genres; meanwhile the second corresponds to \textit{Western}; the third one is \textit{Crime} and \textit{Film-Noir}; the last one is about \textit{Animation} and \textit{Musical}. 
 \begin{figure}[t!]
 	\centering
 	\includegraphics[width=\textwidth]{movie_clusters_genre}
 	\caption{Movies cluster frequency per genre.\label{fig:explore.cluster.genre}}
 \end{figure}
 
-Similarly, for users clusters, it can be seen that the first cluster is mainly about doctors; the second cluster is corresponding to retired users and a part of art and health care; the last cluster contains most of the rest occupations. We can also notice that the proportion of users doing marketing belong to all there clusters equally, and almost no doctor belongs to cluster 3.
+Similarly, for users clusters, it can be seen that the first cluster is mainly about \textit{doctors}; the second cluster is corresponding to \textit{retired} users and a part of \textit{art} and \textit{health care}; the last cluster contains most of the rest occupations. We can also notice that the proportion of users doing \textit{marketing} belong to all there clusters equally, and almost no \textit{doctor} belongs to cluster 3.
 
-We also plot the average ratings of each pair of (movies cluster, users cluster). It appears that movies of cluster 4 (Animation and Musical) are liked by user cluster 3 (users of most of the occupations except doctors and retied); movies of cluster 3 (Crime, Film-Noir, and Mystery) have a high average rating by all users; users of cluster 1 (mostly doctors) only watch movies from cluster 2 (Documentary, Western) and 3 (Crime and Film-Noir), and prefer movies from the latter cluster.
+We also plot the average ratings of each pair of (movies cluster, users cluster). It appears that movies of cluster 4 (\textit{Animation} and \textit{Musical}) are liked by user cluster 3 (users of most of the occupations except \textit{doctors} and \textit{retired}); movies of cluster 3 (\textit{Crime}, \textit{Film-Noir}, and \textit{Mystery}) have a high average rating by all users; users of cluster 1 (mostly \textit{doctors}) only enjoy movies from cluster 2 (\textit{Documentary}, \textit{Western}) and 3 (\textit{Crime} and \textit{Film-Noir}), and prefer movies from the latter cluster.
 
 \begin{figure}[t!]
 	\centering
@@ -446,13 +445,17 @@ We also plot the average ratings of each pair of (movies cluster, users cluster)
 	\caption{Users cluster frequency per occupation.\label{fig:explore.cluster.occupation}}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[t!]
 	\centering
 	\includegraphics[width=0.6\textwidth]{user_movie_clusters}
-	\caption{d mean.\label{fig:explore.cluster.pairs}}
+	\caption{Predicted rating for each (movie cluster, user cluster) combination evaluated at the mean of the corresponding clusters.\label{fig:explore.cluster.pairs}}
 \end{figure}
 %------------------------------------------------------------------------------
 \section{Conclusion}\label{sec:conc}
+
+Experimenting with various approaches to train an effective predictive models for user ratings of movies allowed us to identify that matrix completion using a singular value decomposition exhibited the best performance out of all model considered. This simple, fast and interpretable has lower testing prediction error and higher testing accuracy than $K$-nearest-neighbors, neural networks and restricted Bolztmann machine. Interestingly, it is able to produce better results than its competitor even though no external information is included in the model. 
+
+We also proposed two methods to extract insight out of the predictive models. The first one, applicable to any such model, compares predicted ratings to external information in order to study the joint variation. The second one, using the results from the SVD, allows us to easily cluster users and movies: the study of the composition of the clusters, as well as how clusters relate to each other in terms of predicted ratings, provides interesting information about the two populations. These two approaches can easily be extended to larger datasets with additional features to investigate more precisely the interaction between users and movies.
 
 
 
@@ -525,7 +528,7 @@ p(v_q^{k} =  1 |\textbf{V}) & \propto p(v_q^{k} = 1, \textbf{V})  \\
 \clearpage
 \newpage
 %------------------------------------------------------------------------------
-\section{Detailed results}\label{sec:res}
+\section{Detailed Results}\label{sec:res}
 \Cref{tab:results.knn,tab:results.svd,tab:results.rbm,tab:results.nn} contain some of the best models trained for each of the four prediction methods considered. The complete logs can be found alongside the project's code at \url{https://github.com/fontaine618/507-Project/}.
 
 \input{./table/knn.tex}
